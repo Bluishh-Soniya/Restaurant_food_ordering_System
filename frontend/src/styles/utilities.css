@@ -1,0 +1,470 @@
+/* =========================
+   CONTAINER
+========================= */
+
+.container {
+  width: min(94%, 1400px);
+  margin-inline: auto;
+  padding-inline: 16px;
+}
+
+/* =========================
+   SECTION SPACING
+========================= */
+
+.section {
+  padding: var(--section-padding-y, 48px) 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+/* Section that needs NO border */
+.section-plain {
+  padding: var(--section-padding-y, 48px) 0;
+}
+
+/* =========================
+   PAGE WRAPPER
+   Used for pages like Cart, Checkout, MenuPage
+========================= */
+
+.page-wrapper {
+  padding: 40px 48px;
+  background: #f5f5f5;
+  min-height: 100vh;
+}
+
+/* =========================
+   TYPOGRAPHY
+========================= */
+
+.heading {
+  font-size: clamp(22px, 4vw, 33px);
+  font-weight: 700;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.subtitle {
+  color: var(--text-light);
+  margin-top: 10px;
+  line-height: 1.6;
+}
+
+/* =========================
+   CARD
+========================= */
+
+.card {
+  width: 100%;
+  background: #ffffff;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* CARD HOVER */
+.card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* CARD IMAGE */
+.card img {
+  width: 100%;
+  display: block;
+  object-fit: cover;
+  border-radius: 16px 16px 0 0;
+  transition: transform 0.5s ease;
+}
+
+/* IMAGE ZOOM */
+.card:hover img {
+  transform: scale(1.08);
+}
+
+/* =========================
+   FOOD CARD GRID
+   Responsive grid for menu/trending cards
+========================= */
+
+.food-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 24px;
+}
+
+/* =========================
+   BUTTON
+========================= */
+
+.btn {
+  padding: 12px 26px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #ff6b00, #ff8c42);
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 10px 20px rgba(255, 107, 0, 0.2);
+  font-size: 14px;
+}
+
+/* BUTTON HOVER */
+.btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 25px rgba(255, 107, 0, 0.35);
+}
+
+.btn:active {
+  transform: scale(0.96);
+}
+
+.qty-btn:hover {
+  background: #ff5722;
+  color: white;
+}
+
+/* =========================
+   NAVBAR
+========================= */
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 1000;
+  background: #ffffff;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* =========================
+   NAV LINKS
+========================= */
+
+.nav-link {
+  color: #222;
+  font-weight: 500;
+  transition: color 0.3s ease, transform 0.3s ease;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.nav-link:hover {
+  color: var(--primary);
+  transform: translateY(-2px);
+}
+
+/* =========================
+   FOOTER
+========================= */
+
+.footer {
+  background: #111;
+  padding: 60px 0 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* =========================
+   GRID SYSTEM
+========================= */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+}
+
+/* =========================
+   GLASS EFFECT
+========================= */
+
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* =========================
+   PAGE FLOW
+========================= */
+
+.page-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* =========================
+   HERO BANNER
+========================= */
+
+.banner {
+  width: 100%;
+  height: 440px;
+  overflow: hidden;
+  position: relative;
+  line-height: 0;
+}
+
+.banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+/* =========================
+   OFFER BANNER
+========================= */
+
+.offer-banner {
+  width: 100%;
+  max-width: 1850px;
+  height: 200px;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 0;
+  box-shadow: 0 10px 30px rgba(255, 122, 0, 0.15);
+}
+
+/* OFFER IMAGE */
+.offer-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* =========================
+   TRENDING SCROLL
+========================= */
+
+.trending-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.trending-scroll {
+  scrollbar-width: none;
+}
+
+/* =========================
+   FOOD CARD HOVER EFFECT
+========================= */
+
+.food-card {
+  overflow: hidden;
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+
+/* CARD LIFT */
+.food-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 18px 35px rgba(0, 0, 0, 0.15);
+}
+
+/* IMAGE ZOOM */
+.food-card img {
+  transition: transform 0.5s ease;
+}
+
+.food-card:hover img {
+  transform: scale(1.08);
+}
+
+/* =========================
+   FIX FILTERED SEARCH LAYOUT
+========================= */
+
+.fixed-menu-layout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 25px;
+  align-items: flex-start;
+}
+
+/* =========================
+   MAIN CONTENT AREA
+   Accounts for fixed header height
+========================= */
+
+.main-content {
+  margin-top: var(--header-height, 90px);
+  /* Ensure content always fills screen — footer never floats into viewport */
+  min-height: calc(100vh - var(--header-height, 90px));
+}
+
+/* ========================================
+   RESPONSIVE — LAPTOP (≤1200px)
+======================================== */
+
+@media (max-width: 1200px) {
+  .container {
+    width: 96%;
+    padding-inline: 16px;
+  }
+
+  .food-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+  }
+
+  .page-wrapper {
+    padding: 32px 32px;
+  }
+}
+
+/* ========================================
+   RESPONSIVE — TABLET (≤1024px)
+======================================== */
+
+@media (max-width: 1024px) {
+  :root {
+    --section-padding-y: 36px;
+    --header-height: 80px;
+  }
+
+  .container {
+    width: 95%;
+    padding-inline: 14px;
+  }
+
+  .heading {
+    font-size: 28px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 18px;
+  }
+
+  .food-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 18px;
+  }
+
+  .banner {
+    height: 360px;
+  }
+
+  .page-wrapper {
+    padding: 28px 24px;
+  }
+}
+
+/* ========================================
+   RESPONSIVE — TABLET PORTRAIT (≤768px)
+======================================== */
+
+@media (max-width: 768px) {
+  :root {
+    --section-padding-y: 28px;
+    --header-height: 72px;
+  }
+
+  .container {
+    width: 94%;
+    padding-inline: 12px;
+  }
+
+  .heading {
+    font-size: 24px;
+  }
+
+  .section {
+    padding: 28px 0;
+  }
+
+  .grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 14px;
+  }
+
+  .food-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 14px;
+  }
+
+  .btn {
+    padding: 11px 20px;
+    font-size: 13px;
+  }
+
+  .banner {
+    height: 280px;
+  }
+
+  .offer-banner {
+    height: 160px;
+  }
+
+  .offer-banner img {
+    height: auto;
+    object-fit: cover;
+  }
+
+  .page-wrapper {
+    padding: 24px 16px;
+  }
+
+  .footer {
+    padding: 40px 0 16px;
+  }
+}
+
+/* ========================================
+   RESPONSIVE — MOBILE (≤480px)
+======================================== */
+
+@media (max-width: 480px) {
+  :root {
+    --section-padding-y: 24px;
+    --header-height: 68px;
+  }
+
+  .container {
+    width: 92%;
+    padding-inline: 10px;
+  }
+
+  .heading {
+    font-size: 20px;
+  }
+
+  .banner {
+    height: 220px;
+  }
+
+  .offer-banner {
+    height: 130px;
+  }
+
+  .food-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .btn {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+
+  .page-wrapper {
+    padding: 20px 12px;
+  }
+}

@@ -1,0 +1,35 @@
+:root {
+
+  /* ===== BRAND COLORS ===== */
+  --primary: #ff6b00;
+  --primary-light: #ff8c42;
+
+  --dark: #0f0f0f;
+  --dark-card: #1a1a1a;
+
+  --white: #ffffff;
+  --text-light: #bdbdbd;
+
+  --border: #2a2a2a;
+
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+
+  --radius: 18px;
+
+  /* ===== SPACING SCALE ===== */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 40px;
+  --space-2xl: 64px;
+
+  /* ===== HEADER HEIGHT ===== */
+  /* Matches the fixed header height for page top-margin */
+  --header-height: 90px;
+
+  /* ===== SECTION VERTICAL RHYTHM ===== */
+  --section-padding-y: 48px;
+  --section-padding-y-tablet: 36px;
+  --section-padding-y-mobile: 28px;
+}
