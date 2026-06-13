@@ -8,6 +8,7 @@ import CheckoutPage from "./pages/CheckoutPage";
 import MenuPage from "./pages/MENU/MenuPage";
 import Notifications from "./components/Notifications";
 import ScrollToTop from "./components/ScrollToTop";
+import TableRedirect from "./pages/TableRedirect";
 
 import { CartProvider } from "./context/CartContext";
 import { NotificationProvider } from "./context/NotificationContext";
@@ -42,6 +43,9 @@ function App() {
                 path="/"
                 element={<Home searchTerm={searchTerm} />}
               />
+
+              {/* QR code scan lands here — reads tableNumber, saves to localStorage, redirects to / */}
+              <Route path="/table/:tableNumber" element={<TableRedirect />} />
 
               <Route path="/menu/:categoryId" element={<MenuPage />} />
               <Route path="/cart" element={<CartPage />} />

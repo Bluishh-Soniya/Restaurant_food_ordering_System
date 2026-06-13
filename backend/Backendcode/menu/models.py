@@ -1,5 +1,8 @@
 from django.db import models
 from django.utils import timezone
+import qrcode
+import io
+from django.core.files import File
 
 
 class Restaurant(models.Model):
@@ -94,6 +97,26 @@ class Banner(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Table(models.Model):
+    table_number = models.IntegerField(unique=True)
+    is_active = models.BooleanField(default=True)
+    qr_code = models.ImageField(upload_to='qr_codes/', blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        # Auto-generate QR pointing to /table/<number>
+        qr_url = f"http://localhost:3000/table/{self.table_number}"
+        qr_img = qrcode.make(qr_url)
+        buffer = io.BytesIO()
+        qr_img.save(buffer, format='PNG')
+        buffer.seek(0)
+        filename = f"table_{self.table_number}.png"
+        self.qr_code.save(filename, File(buffer), save=False)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Table {self.table_number}"
 
 
 # 🔥 ORDER SYSTEM

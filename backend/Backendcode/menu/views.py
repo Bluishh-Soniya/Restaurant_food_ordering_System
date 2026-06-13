@@ -3,8 +3,11 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
+import razorpay
 
-from .models import Category, MenuItem, Offer, Banner
+razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+
+from .models import Category, MenuItem, Offer, Banner, Table
 from orders.serializers import OrderSerializer
 from .serializers import MenuItemSerializer
 from .utils import get_discounted_price
@@ -170,9 +173,89 @@ class OrderCreateView(APIView):
         if serializer.is_valid():
             order = serializer.save()
 
-            return Response({
-    "message": "Order placed successfully",
-    "order": OrderSerializer(order).data
-}, status=201)
+            # Create Razorpay order
+            try:
+                amount_in_paise = int(order.total_price * 100)
+                razorpay_order = razorpay_client.order.create({
+                    "amount": amount_in_paise,
+                    "currency": "INR",
+                    "payment_capture": "1"
+                })
+
+                order.razorpay_order_id = razorpay_order['id']
+                order.save()
+
+                return Response({
+                    "message": "Order placed successfully",
+                    "order": OrderSerializer(order).data,
+                    "razorpay_order_id": order.razorpay_order_id,
+                    "amount": amount_in_paise,
+                    "currency": "INR",
+                    "key_id": settings.RAZORPAY_KEY_ID
+                }, status=201)
+
+            except Exception as e:
+                # If razorpay fails, just return the order without payment integration
+                return Response({
+                    "message": "Order placed successfully but failed to initialize payment.",
+                    "error": str(e),
+                    "order": OrderSerializer(order).data
+                }, status=201)
 
         return Response(serializer.errors, status=400)
+
+
+# ✅ VERIFY RAZORPAY PAYMENT VIEW
+class VerifyPaymentView(APIView):
+    def post(self, request):
+        try:
+            data = request.data
+            razorpay_order_id = data.get('razorpay_order_id')
+            razorpay_payment_id = data.get('razorpay_payment_id')
+            razorpay_signature = data.get('razorpay_signature')
+            
+            # Verify the payment signature
+            params_dict = {
+                'razorpay_order_id': razorpay_order_id,
+                'razorpay_payment_id': razorpay_payment_id,
+                'razorpay_signature': razorpay_signature
+            }
+            
+            # If signature is invalid, it raises SignatureVerificationError
+            razorpay_client.utility.verify_payment_signature(params_dict)
+            
+            # Update order status
+            from orders.models import Order
+            order = Order.objects.get(razorpay_order_id=razorpay_order_id)
+            order.payment_status = 'success'
+            order.razorpay_payment_id = razorpay_payment_id
+            order.razorpay_signature = razorpay_signature
+            order.save()
+            
+            return Response({"message": "Payment successful"}, status=status.HTTP_200_OK)
+            
+        except razorpay.errors.SignatureVerificationError:
+            from orders.models import Order
+            order = Order.objects.get(razorpay_order_id=data.get('razorpay_order_id'))
+            order.payment_status = 'failed'
+            order.save()
+            return Response({"error": "Invalid payment signature"}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+# ✅ TABLE LIST VIEW — returns all active tables with QR code URLs
+class TableListView(APIView):
+    def get(self, request):
+        tables = Table.objects.filter(is_active=True).order_by('table_number')
+        data = [
+            {
+                "id": t.id,
+                "table_number": t.table_number,
+                "is_active": t.is_active,
+                "qr_code": request.build_absolute_uri(t.qr_code.url) if t.qr_code else None,
+                "qr_url": f"http://localhost:3000/table/{t.table_number}",
+            }
+            for t in tables
+        ]
+        return Response(data)

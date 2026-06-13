@@ -20,10 +20,21 @@ export const fetchMenuByCategory = (categoryId, restaurantId = 1) => {
   return API.get(`menu/filter/?category_id=${categoryId}&restaurant=${restaurantId}`);
 };
 
+// FETCH ALL ACTIVE TABLES (with QR code URLs)
+export const fetchTables = () => {
+  return API.get("tables/");
+};
+
 // PLACE ORDER
 export const placeOrder = (data) => {
   return API.post("orders/", data);
 };
+
+// VERIFY PAYMENT
+export const verifyPayment = (data) => {
+  return API.post("verify-payment/", data);
+};
+
 
 
 export default API;

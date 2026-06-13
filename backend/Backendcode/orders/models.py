@@ -12,23 +12,41 @@ class Order(models.Model):
         ('pending', 'Pending'),
         ('preparing', 'Preparing'),
         ('ready', 'Ready'),
-        ('served', 'Served')
+        ('delivered', 'Delivered'),
     )
 
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
+    table = models.ForeignKey(
+        'menu.Table',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='orders'
+    )
 
-    # ✅ ADD DEFAULT (fixes validation issues)
     order_type = models.CharField(
         max_length=20,
         choices=ORDER_TYPE,
         default='dine_in'
     )
 
-    # ✅ FIX: Integer → Decimal
     total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     status = models.CharField(max_length=20, choices=STATUS, default='pending')
-    dish_names = models.CharField(max_length=500, blank=True, null=True)
+    item_names = models.CharField(max_length=500, blank=True, null=True)
+
+    payment_status = models.CharField(
+        max_length=20,
+        choices=(
+            ('pending', 'Pending'),
+            ('success', 'Success'),
+            ('failed', 'Failed')
+        ),
+        default='pending'
+    )
+    razorpay_order_id = models.CharField(max_length=100, blank=True, null=True)
+    razorpay_payment_id = models.CharField(max_length=100, blank=True, null=True)
+    razorpay_signature = models.CharField(max_length=200, blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -42,6 +60,5 @@ class OrderItem(models.Model):
 
     quantity = models.IntegerField()
 
-    dish_name = models.CharField(max_length=200, blank=True, null=True)
-    # ✅ FIX: Integer → Decimal (VERY IMPORTANT)
+    item_name = models.CharField(max_length=200, blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)

@@ -43,7 +43,7 @@ const CartPage = () => {
             gap: "10px",
             fontSize: "clamp(26px, 4vw, 42px)",
             fontWeight: "bold",
-            marginBottom: "28px",
+            marginBottom: "12px",
           }}
         >
           <MdOutlineShoppingCart
@@ -52,6 +52,25 @@ const CartPage = () => {
           />
           Shopping Cart
         </h2>
+
+        {/* TABLE BADGE */}
+        {localStorage.getItem("tableNumber") && (
+          <div
+            style={{
+              background: "#fff3e0",
+              border: "1px solid #ff9800",
+              borderRadius: "8px",
+              padding: "10px 16px",
+              marginBottom: "20px",
+              fontSize: "14px",
+              color: "#e65100",
+              fontWeight: "600",
+              display: "inline-block",
+            }}
+          >
+            🍽️ Table {localStorage.getItem("tableNumber")}
+          </div>
+        )}
 
         {cart.length === 0 ? (
 

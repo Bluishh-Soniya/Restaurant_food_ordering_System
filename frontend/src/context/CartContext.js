@@ -8,6 +8,12 @@ export const CartProvider = ({ children }) => {
 
   // ✅ ADD ITEM
   const addToCart = (item) => {
+    // ✅ MUST HAVE A TABLE NUMBER FIRST
+    const tableNumber = localStorage.getItem("tableNumber");
+    if (!tableNumber || tableNumber === "undefined" || tableNumber === "null") {
+      alert("Please scan a table QR code before adding items to the cart.");
+      return;
+    }
 
     // ✅ PRESERVE OFFER DATA
     const fixedItem = {
