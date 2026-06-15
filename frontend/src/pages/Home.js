@@ -14,8 +14,13 @@ const Home = ({ searchTerm = "" }) => {
   useEffect(() => {
     fetchHomeData(1)
       .then((res) => {
-        setData(res.data);
-        setError(null);
+        if (res.data.error) {
+          console.error("Backend error:", res.data.error);
+          setError(res.data.error);
+        } else {
+          setData(res.data);
+          setError(null);
+        }
       })
       .catch((err) => {
         console.error("Home data fetch error:", err.message);
@@ -45,7 +50,7 @@ const Home = ({ searchTerm = "" }) => {
       <Categories data={data?.categories || []} />
       <div id="offers"><Offers data={data?.offers || []} /></div>
       <div id="trending"><Trending data={data?.trending || []} /></div>
-      <div id="menu"><MenuSection data={data?.menu || []} searchTerm={searchTerm} /></div>
+      <div id="menu"><MenuSection data={data?.menu || []} categories={data?.categories || []} searchTerm={searchTerm} /></div>
     </div>
   );
 };

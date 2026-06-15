@@ -57,9 +57,8 @@ const CheckoutPage = () => {
         }))
       };
 
-      // 1. Create Payment Order first
-      const paymentRes = await createPayment({ items: orderData.items });
-      console.log("Payment initialized:", paymentRes.data);
+      const orderRes = await placeOrder(orderData);
+      console.log("Order placed:", orderRes.data);
 
       if (!orderRes.data.razorpay_order_id) {
         alert(`❌ Payment Initialization Failed: ${orderRes.data.message || 'Unknown Error'}`);
@@ -101,7 +100,7 @@ const CheckoutPage = () => {
         currency: orderRes.data.currency,
         name: "RestroScan",
         description: "Payment for Order",
-        order_id: paymentRes.data.razorpay_order_id,
+        order_id: orderRes.data.razorpay_order_id,
         handler: async function (response) {
           try {
             const data = {

@@ -70,7 +70,7 @@ def home_data(request):
             "banner": {
                 "title": getattr(banner, "title", ""),
                 "subtitle": getattr(banner, "subtitle", ""),
-                "image": request.build_absolute_uri(banner.image.url)
+                "image": request.build_absolute_uri(banner.image.url) if banner and banner.image and banner.image.name else None
             } if banner else None,
 
             "trending": [
@@ -78,7 +78,7 @@ def home_data(request):
                     **{
                         "id": m.id,
                         "name": m.name,
-                        "image": request.build_absolute_uri(m.image.url) if m.image and m.image.name else None,
+                        "image": str(m.image) if m.image and str(m.image).startswith('http') else (request.build_absolute_uri(f'/media/{m.image}') if m.image else None),
                         "price": str(m.price),
                         "description": m.description
                     },
@@ -116,52 +116,57 @@ class TrendingItemsView(APIView):
         return Response(serializer.data)
 
 
-# ✅ FILTER MENU BY CATEGORY
-@api_view(['GET'])
-def filter_menu_by_category(request):
-    try:
-        category_id = request.GET.get('category_id')
-        restaurant_id = request.GET.get('restaurant', 1)
-        
-        if not category_id:
+# ✅ FILTER MENU BY CATEGORY AND SEARCH
+class MenuItemListView(APIView):
+    def get(self, request):
+        try:
+            restaurant_id = request.GET.get('restaurant', 1)
+            category = request.GET.get('category', 'All')
+            search = request.GET.get('search', '')
+
+            menu_items = MenuItem.objects.filter(restaurant_id=restaurant_id)
+
+            if category and category != 'All':
+                if category.lower() == 'recommended':
+                    menu_items = menu_items.filter(is_recommended=True)
+                elif category.lower() == 'trending':
+                    menu_items = menu_items.filter(is_trending=True)
+                else:
+                    menu_items = menu_items.filter(category__name__iexact=category)
+            
+            if search:
+                menu_items = menu_items.filter(name__icontains=search)
+
+            serializer = MenuItemSerializer(
+                menu_items,
+                many=True,
+                context={"request": request}
+            )
+
+            # Manually inject dynamic pricing
+            menu_data = [
+                {
+                    **item,
+                    "discount_percentage": get_discounted_price(
+                        MenuItem.objects.get(id=item["id"])
+                    )["discount_percentage"],
+                    "final_price": get_discounted_price(
+                        MenuItem.objects.get(id=item["id"])
+                    )["final_price"]
+                }
+                for item in serializer.data
+            ]
+
             return Response({
-                "error": "category_id parameter is required"
-            }, status=400)
-        
-        menu_items = MenuItem.objects.filter(
-            category_id=category_id,
-            restaurant_id=restaurant_id
-        )
-        
-        serializer = MenuItemSerializer(
-            menu_items,
-            many=True,
-            context={"request": request}
-        )
-        
-        menu_data = [
-            {
-                **item,
-                "discount_percentage": get_discounted_price(
-                    MenuItem.objects.get(id=item["id"])
-                )["discount_percentage"],
-                "final_price": get_discounted_price(
-                    MenuItem.objects.get(id=item["id"])
-                )["final_price"]
-            }
-            for item in serializer.data
-        ]
-        
-        return Response({
-            "menu": menu_data,
-            "count": len(menu_data)
-        })
-        
-    except Exception as e:
-        return Response({
-            "error": str(e),
-            "menu": []
-        }, status=500)
+                "menu": menu_data,
+                "count": len(menu_data)
+            })
+
+        except Exception as e:
+            return Response({
+                "error": str(e),
+                "menu": []
+            }, status=500)
 
 
 # ✅ ORDER CREATE VIEW (FINAL CLEAN)

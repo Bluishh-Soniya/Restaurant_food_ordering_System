@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Footer from "./components/footer/footer";
 import Home from "./pages/Home";
 import Header from "./components/header/header";
@@ -20,6 +20,9 @@ import { NotificationProvider } from "./context/NotificationContext";
 const AppContent = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const { showOrderModal, setShowOrderModal } = useCart();
+  const location = useLocation();
+
+  const isAdminRoute = location.pathname.startsWith("/admin");
 
   useEffect(() => {
     // Ensure tableNumber starts at 1 if not already set by scanning a QR
@@ -30,14 +33,17 @@ const AppContent = () => {
 
   return (
     <>
-      <Header searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-      <Notifications />
-      <OrderTypeModal
-        isOpen={showOrderModal}
-        onClose={() => setShowOrderModal(false)}
-      />
+      {!isAdminRoute && <Header searchTerm={searchTerm} setSearchTerm={setSearchTerm} />}
+      {!isAdminRoute && <Notifications />}
+      
+      {!isAdminRoute && (
+        <OrderTypeModal
+          isOpen={showOrderModal}
+          onClose={() => setShowOrderModal(false)}
+        />
+      )}
 
-      <div className="main-content">
+      <div className={isAdminRoute ? "" : "main-content"}>
         <Routes>
           <Route path="/" element={<Home searchTerm={searchTerm} />} />
           <Route path="/menu/:categoryId" element={<MenuPage />} />
@@ -53,7 +59,7 @@ const AppContent = () => {
         </Routes>
       </div>
 
-      <Footer />
+      {!isAdminRoute && <Footer />}
     </>
   );
 };

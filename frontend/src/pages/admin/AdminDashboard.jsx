@@ -25,7 +25,13 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [stats, setStats] = useState(null);
   const [data, setData] = useState([]);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  
+  // Menu Item CRUD State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [formData, setFormData] = useState({});
+  
   const navigate = useNavigate();
   const token = localStorage.getItem("adminToken");
 
@@ -54,6 +60,11 @@ const AdminDashboard = () => {
     } else {
       api().get(`${activeTab}/`).then(res => setData(res.data)).catch(handleAuthError);
     }
+    
+    // Fetch categories for the Menu Item dropdown
+    if (activeTab === "menu-items") {
+      api().get("categories/").then(res => setCategories(res.data)).catch(console.error);
+    }
   }, [activeTab, token, api, handleAuthError]);
 
   const handleStatusChange = async (orderId, newStatus) => {
@@ -80,6 +91,41 @@ const AdminDashboard = () => {
     localStorage.removeItem("adminToken");
     localStorage.removeItem("adminUser");
     navigate("/admin/login");
+  };
+
+  // CRUD HANDLERS
+  const openMenuModal = (item = null) => {
+    setEditingItem(item);
+    if (item) {
+      setFormData({
+        name: item.name || "", price: item.price || "", description: item.description || "",
+        image: item.image || "", category: item.category || (categories[0]?.id || ""),
+        is_available: item.is_available, is_trending: item.is_trending, is_recommended: item.is_recommended
+      });
+    } else {
+      setFormData({
+        name: "", price: "", description: "", image: "", category: categories[0]?.id || "",
+        is_available: true, is_trending: false, is_recommended: false
+      });
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleMenuSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const payload = { ...formData, restaurant: 1 };
+      if (editingItem) {
+        await api().patch(`menu-items/${editingItem.id}/`, payload);
+      } else {
+        await api().post(`menu-items/`, payload);
+      }
+      setIsModalOpen(false);
+      api().get("menu-items/").then(res => setData(res.data));
+    } catch (err) {
+      alert("Failed to save menu item. Check your inputs.");
+      console.error(err);
+    }
   };
 
   // DASHBOARD TAB
@@ -198,38 +244,68 @@ const AdminDashboard = () => {
 
   // GENERIC TABLE (Menu Items / Categories)
   const renderGenericTable = (endpoint) => {
-    if (data.length === 0) return <p style={{ textAlign: "center", padding: "40px", color: "#9ca3af", background: "#fff", borderRadius: "12px" }}>No records</p>;
-    const keys = Object.keys(data[0]).filter(k => typeof data[0][k] !== "object" && !["image", "banner", "qr_code"].includes(k));
+    const isMenu = endpoint === "menu-items";
+    
     return (
-      <div style={{ background: "#fff", borderRadius: "12px", overflow: "auto", boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr style={{ background: "#f9fafb" }}>
-              {keys.map(k => (
-                <th key={k} style={{ padding: "14px 12px", textAlign: "left", fontSize: "13px", fontWeight: "600", color: "#6b7280", borderBottom: "1px solid #e5e7eb", textTransform: "capitalize" }}>
-                  {k.replace(/_/g, " ")}
-                </th>
-              ))}
-              <th style={{ padding: "14px 12px", textAlign: "left", fontSize: "13px", fontWeight: "600", color: "#6b7280", borderBottom: "1px solid #e5e7eb" }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.map(row => (
-              <tr key={row.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                {keys.map(k => (
-                  <td key={k} style={{ padding: "12px", fontSize: "14px" }}>{String(row[k] ?? "")}</td>
+      <div>
+        {isMenu && (
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "16px" }}>
+            <button 
+              onClick={() => openMenuModal()}
+              style={{
+                padding: "10px 20px", background: "#f97316", color: "white",
+                border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer",
+                boxShadow: "0 4px 6px rgba(249, 115, 22, 0.2)"
+              }}
+            >
+              + Add Menu Item
+            </button>
+          </div>
+        )}
+        
+        {data.length === 0 ? (
+          <p style={{ textAlign: "center", padding: "40px", color: "#9ca3af", background: "#fff", borderRadius: "12px" }}>No records</p>
+        ) : (
+          <div style={{ background: "#fff", borderRadius: "12px", overflow: "auto", boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ background: "#f9fafb" }}>
+                  {Object.keys(data[0]).filter(k => typeof data[0][k] !== "object" && !["image", "banner", "qr_code"].includes(k)).map(k => (
+                    <th key={k} style={{ padding: "14px 12px", textAlign: "left", fontSize: "13px", fontWeight: "600", color: "#6b7280", borderBottom: "1px solid #e5e7eb", textTransform: "capitalize" }}>
+                      {k.replace(/_/g, " ")}
+                    </th>
+                  ))}
+                  <th style={{ padding: "14px 12px", textAlign: "left", fontSize: "13px", fontWeight: "600", color: "#6b7280", borderBottom: "1px solid #e5e7eb" }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.map(row => (
+                  <tr key={row.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
+                    {Object.keys(row).filter(k => typeof row[k] !== "object" && !["image", "banner", "qr_code"].includes(k)).map(k => (
+                      <td key={k} style={{ padding: "12px", fontSize: "14px" }}>
+                        {typeof row[k] === 'boolean' ? (row[k] ? "Yes" : "No") : String(row[k] ?? "")}
+                      </td>
+                    ))}
+                    <td style={{ padding: "12px", display: "flex", gap: "8px" }}>
+                      {isMenu && (
+                        <button onClick={() => openMenuModal(row)} style={{
+                          padding: "6px 14px", background: "#eff6ff", color: "#2563eb",
+                          border: "1px solid #bfdbfe", borderRadius: "6px", cursor: "pointer",
+                          fontSize: "13px", fontWeight: "500",
+                        }}>Edit</button>
+                      )}
+                      <button onClick={() => handleDelete(endpoint, row.id)} style={{
+                        padding: "6px 14px", background: "#fef2f2", color: "#dc2626",
+                        border: "1px solid #fecaca", borderRadius: "6px", cursor: "pointer",
+                        fontSize: "13px", fontWeight: "500",
+                      }}>Delete</button>
+                    </td>
+                  </tr>
                 ))}
-                <td style={{ padding: "12px" }}>
-                  <button onClick={() => handleDelete(endpoint, row.id)} style={{
-                    padding: "6px 14px", background: "#fef2f2", color: "#dc2626",
-                    border: "1px solid #fecaca", borderRadius: "6px", cursor: "pointer",
-                    fontSize: "13px", fontWeight: "500",
-                  }}>Delete</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     );
   };
@@ -245,16 +321,16 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", fontFamily: "'Inter', sans-serif" }}>
+    <div style={{ display: "flex", height: "100vh", overflow: "hidden", fontFamily: "'Inter', sans-serif" }}>
       {/* SIDEBAR */}
       <div style={{
-        width: sidebarOpen ? "260px" : "0px", background: "#111827", color: "#fff",
-        display: "flex", flexDirection: "column", transition: "width 0.3s",
+        width: "200px", background: "#111827", color: "#fff",
+        display: "flex", flexDirection: "column",
         overflow: "hidden", flexShrink: 0,
       }}>
-        <div style={{ padding: "24px 20px", borderBottom: "1px solid #1f2937" }}>
-          <h2 style={{ fontSize: "18px", fontWeight: "700", margin: 0, display: "flex", alignItems: "center", gap: "8px" }}><Utensils size={20} /> RestroScan</h2>
-          <p style={{ fontSize: "12px", color: "#9ca3af", margin: "4px 0 0" }}>Admin Dashboard</p>
+        <div style={{ padding: "20px 16px", borderBottom: "1px solid #1f2937" }}>
+          <h2 style={{ fontSize: "16px", fontWeight: "700", margin: 0, display: "flex", alignItems: "center", gap: "8px" }}><Utensils size={18} /> RestroScan</h2>
+          <p style={{ fontSize: "11px", color: "#9ca3af", margin: "4px 0 0" }}>Admin Dashboard</p>
         </div>
 
         <nav style={{ flex: 1, padding: "12px 0" }}>
@@ -263,11 +339,11 @@ const AdminDashboard = () => {
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               style={{
-                display: "flex", width: "100%", padding: "14px 20px",
+                display: "flex", width: "100%", padding: "12px 16px",
                 background: activeTab === tab.key ? "#1f2937" : "transparent",
                 color: activeTab === tab.key ? "#fff" : "#9ca3af",
                 border: "none", textAlign: "left", cursor: "pointer",
-                fontSize: "14px", fontWeight: activeTab === tab.key ? "600" : "400",
+                fontSize: "13px", fontWeight: activeTab === tab.key ? "600" : "400",
                 borderLeft: activeTab === tab.key ? "3px solid #ff5722" : "3px solid transparent",
                 transition: "all 0.2s",
                 alignItems: "center", gap: "10px",
@@ -279,8 +355,8 @@ const AdminDashboard = () => {
         </nav>
 
         <button onClick={handleLogout} style={{
-          padding: "16px 20px", background: "#dc2626", color: "#fff",
-          border: "none", cursor: "pointer", fontSize: "14px", fontWeight: "600",
+          padding: "12px 16px", background: "#dc2626", color: "#fff",
+          border: "none", cursor: "pointer", fontSize: "13px", fontWeight: "600",
           display: "flex", alignItems: "center", justifyContent: "center", gap: "8px"
         }}>
           <LogOut size={16} /> Logout
@@ -294,9 +370,6 @@ const AdminDashboard = () => {
           display: "flex", justifyContent: "space-between", alignItems: "center",
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{
-              background: "none", border: "none", fontSize: "20px", cursor: "pointer", padding: "4px",
-            }}>☰</button>
             <h1 style={{ fontSize: "20px", fontWeight: "700", margin: 0, textTransform: "capitalize" }}>
               {activeTab.replace("-", " ")}
             </h1>
@@ -310,6 +383,85 @@ const AdminDashboard = () => {
           {renderContent()}
         </div>
       </div>
+
+      {/* MENU ITEM CRUD MODAL */}
+      {isModalOpen && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+          background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center",
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: "#fff", width: "500px", borderRadius: "16px", padding: "32px",
+            boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
+            maxHeight: "90vh", overflowY: "auto"
+          }}>
+            <h2 style={{ margin: "0 0 24px", fontSize: "20px", fontWeight: "700" }}>
+              {editingItem ? "Edit Menu Item" : "Add Menu Item"}
+            </h2>
+            <form onSubmit={handleMenuSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <div>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#4b5563", marginBottom: "6px" }}>Name</label>
+                <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})}
+                  style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "14px" }} />
+              </div>
+              
+              <div style={{ display: "flex", gap: "16px" }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#4b5563", marginBottom: "6px" }}>Price (₹)</label>
+                  <input required type="number" step="0.01" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "14px" }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#4b5563", marginBottom: "6px" }}>Category</label>
+                  <select required value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "14px", background: "#fff" }}>
+                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#4b5563", marginBottom: "6px" }}>Image URL (Online Link Only)</label>
+                <input type="url" placeholder="https://images.unsplash.com/..." value={formData.image} onChange={e => setFormData({...formData, image: e.target.value})}
+                  style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "14px" }} />
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#4b5563", marginBottom: "6px" }}>Description</label>
+                <textarea required rows="3" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})}
+                  style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "14px", resize: "vertical" }} />
+              </div>
+
+              <div style={{ display: "flex", gap: "24px", padding: "8px 0" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14px", cursor: "pointer" }}>
+                  <input type="checkbox" checked={formData.is_available} onChange={e => setFormData({...formData, is_available: e.target.checked})} />
+                  Available
+                </label>
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14px", cursor: "pointer" }}>
+                  <input type="checkbox" checked={formData.is_recommended} onChange={e => setFormData({...formData, is_recommended: e.target.checked})} />
+                  Recommended
+                </label>
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14px", cursor: "pointer" }}>
+                  <input type="checkbox" checked={formData.is_trending} onChange={e => setFormData({...formData, is_trending: e.target.checked})} />
+                  Trending
+                </label>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "16px" }}>
+                <button type="button" onClick={() => setIsModalOpen(false)} style={{
+                  padding: "10px 20px", background: "#f3f4f6", color: "#4b5563",
+                  border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer"
+                }}>Cancel</button>
+                <button type="submit" style={{
+                  padding: "10px 20px", background: "#f97316", color: "#fff",
+                  border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer"
+                }}>Save Item</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

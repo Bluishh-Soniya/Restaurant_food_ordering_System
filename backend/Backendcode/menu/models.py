@@ -34,7 +34,7 @@ class MenuItem(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)  # ✅ Decimal for accuracy
     description = models.TextField()
 
-    image = models.ImageField(upload_to='menu/', null=True, blank=True)
+    image = models.CharField(max_length=1000, null=True, blank=True)
     is_trending = models.BooleanField(default=False)
 
     is_available = models.BooleanField(default=True)
