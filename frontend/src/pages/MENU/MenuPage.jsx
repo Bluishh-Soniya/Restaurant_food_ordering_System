@@ -4,6 +4,7 @@ import { fetchMenuByCategory } from "../../services/api";
 import { useCart } from "../../context/CartContext";
 import { NotificationContext } from "../../context/NotificationContext";
 import { FaArrowLeft } from "react-icons/fa";
+import { Utensils } from "lucide-react";
 
 const MenuPage = () => {
   const { categoryId } = useParams();
@@ -163,7 +164,7 @@ const MenuPage = () => {
             color: "#111",
           }}
         >
-          🍽️ {categoryName}
+          <Utensils size={32} style={{ marginRight: "12px", color: "#1e3a8a", verticalAlign: "middle" }} /> {categoryName}
         </h1>
 
         <p

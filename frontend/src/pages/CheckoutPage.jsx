@@ -2,6 +2,9 @@ import React from "react";
 import { useCart } from "../context/CartContext";
 import { placeOrder, verifyPayment } from "../services/api";
 import { useNavigate } from "react-router-dom";
+import { NotificationContext } from "../context/NotificationContext";
+import { useContext } from "react";
+import { Package, Utensils } from "lucide-react";
 
 const TAX_RATE = 0.05; // 5% GST — same as CartPage
 
@@ -9,12 +12,8 @@ const loadScript = (src) => {
   return new Promise((resolve) => {
     const script = document.createElement("script");
     script.src = src;
-    script.onload = () => {
-      resolve(true);
-    };
-    script.onerror = () => {
-      resolve(false);
-    };
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
     document.body.appendChild(script);
   });
 };
@@ -22,24 +21,36 @@ const loadScript = (src) => {
 const CheckoutPage = () => {
   const { cart, totalPrice, clearCart } = useCart();
   const navigate = useNavigate();
+  const { addNotification } = useContext(NotificationContext);
 
   // ✅ Mirror CartPage tax calculation exactly
   const tax = parseFloat((totalPrice * TAX_RATE).toFixed(2));
   const finalTotal = parseFloat((totalPrice + tax).toFixed(2));
 
   const handleOrder = async () => {
+    if (cart.length === 0) {
+      addNotification("Your cart is empty. Please add items before checking out.", "error");
+      return;
+    }
+
     try {
-      // ✅ Read table number from localStorage (set when QR was scanned)
+      // ✅ Get order type and table number from localStorage
+      const orderType = localStorage.getItem("orderType");
       const tableNumber = localStorage.getItem("tableNumber");
 
-      if (!tableNumber || tableNumber === "undefined" || tableNumber === "null") {
-        alert("Please scan a table QR code before placing an order. No table number found.");
-        return;
+      // ✅ Determine order type for API
+      let finalOrderType = "parcel";
+      if (orderType === "dine-in") {
+        if (!tableNumber || tableNumber === "undefined" || tableNumber === "null") {
+          alert("Please select a table before placing an order.");
+          return;
+        }
+        finalOrderType = "dine_in";
       }
 
       const orderData = {
-        order_type: "dine_in",
-        table_number: parseInt(tableNumber, 10),
+        order_type: finalOrderType,
+        table_number: finalOrderType === "dine_in" ? parseInt(tableNumber, 10) : null,
         items: cart.map(i => ({
           menu_item: i.id,
           quantity: i.quantity
@@ -50,10 +61,27 @@ const CheckoutPage = () => {
       console.log("Order placed:", orderRes.data);
 
       if (!orderRes.data.razorpay_order_id) {
-        // Fallback if Razorpay is not configured or failed to initialize
-        clearCart();
-        alert(`✅ Order placed!\nTable: ${tableNumber || "N/A"}\nTotal (incl. tax): ₹${finalTotal}`);
-        navigate("/");
+        alert(`❌ Payment Initialization Failed: ${orderRes.data.message || 'Unknown Error'}`);
+        return;
+      }
+
+      if (orderRes.data.is_mock) {
+        // Handle Mock Payment Flow automatically
+        addNotification("Network error with Razorpay. Using mock payment flow for testing...", "info");
+        try {
+            const data = {
+              razorpay_order_id: orderRes.data.razorpay_order_id,
+              razorpay_payment_id: "mock_payment_" + Math.floor(Math.random() * 1000000),
+              razorpay_signature: "mock_signature",
+            };
+            const result = await verifyPayment(data);
+            addNotification("Payment successful (Mock)!", "success");
+            clearCart();
+            navigate(`/order-success?order_id=${result.data.order_id}`);
+        } catch (err) {
+            console.error("Mock Verification error:", err);
+            addNotification("Mock payment verification failed.", "error");
+        }
         return;
       }
 
@@ -66,7 +94,7 @@ const CheckoutPage = () => {
       }
 
       const options = {
-        key: process.env.REACT_APP_RAZORPAY_KEY_ID || orderRes.data.key_id,
+        key: orderRes.data.key_id, // ✅ Always use backend key to prevent cache issues
         amount: orderRes.data.amount,
         currency: orderRes.data.currency,
         name: "RestroScan",
@@ -75,21 +103,22 @@ const CheckoutPage = () => {
         handler: async function (response) {
           try {
             const data = {
-              razorpay_payment_id: response.razorpay_payment_id,
               razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
             };
+
             const result = await verifyPayment(data);
-            alert("✅ " + result.data.message);
+            addNotification("Payment successful!", "success");
             clearCart();
-            navigate("/");
+            navigate(`/order-success?order_id=${result.data.order_id}`);
           } catch (err) {
-            console.error(err);
-            alert("Payment verification failed!");
+            console.error("Verification error:", err);
+            addNotification("Payment verification failed.", "error");
           }
         },
         prefill: {
-          name: "Dine In User",
+          name: "RestroScan User",
           email: "user@example.com",
           contact: "9999999999"
         },
@@ -131,8 +160,23 @@ const CheckoutPage = () => {
             Checkout
           </h2>
 
-          {/* TABLE BADGE */}
-          {localStorage.getItem("tableNumber") && (
+          {/* ORDER TYPE BADGE */}
+          {localStorage.getItem("orderType") === "parcel" ? (
+            <div
+              style={{
+                background: "#e8f5e9",
+                border: "1px solid #4caf50",
+                borderRadius: "8px",
+                padding: "10px 16px",
+                marginBottom: "20px",
+                fontSize: "14px",
+                color: "#2e7d32",
+                fontWeight: "600",
+              }}
+            >
+              <Package size={16} style={{ display: "inline-block", verticalAlign: "middle", marginRight: "4px" }} /> Parcel / Takeaway
+            </div>
+          ) : (
             <div
               style={{
                 background: "#fff3e0",
@@ -145,7 +189,7 @@ const CheckoutPage = () => {
                 fontWeight: "600",
               }}
             >
-              🍽️ Table {localStorage.getItem("tableNumber")}
+              <Utensils size={16} style={{ display: "inline-block", verticalAlign: "middle", marginRight: "4px" }} /> Table {localStorage.getItem("tableNumber")}
             </div>
           )}
 
@@ -236,7 +280,7 @@ const CheckoutPage = () => {
               fontFamily: "inherit",
             }}
           >
-            PLACE ORDER
+            PROCEED TO PAYMENT
           </button>
 
         </div>

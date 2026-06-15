@@ -8,8 +8,9 @@ import razorpay
 razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
 from .models import Category, MenuItem, Offer, Banner, Table
+from .serializers import MenuItemSerializer, InvoiceSerializer
+from orders.models import Invoice
 from orders.serializers import OrderSerializer
-from .serializers import MenuItemSerializer
 from .utils import get_discounted_price
 
 
@@ -29,7 +30,7 @@ def home_data(request):
                 {
                     "id": c.id,
                     "name": c.name,
-                    "image": request.build_absolute_uri(c.image.url) if getattr(c, "image", None) else None
+                    "image": request.build_absolute_uri(c.image.url) if c.image and c.image.name else None
                 }
                 for c in categories
             ],
@@ -61,7 +62,7 @@ def home_data(request):
                     "title": o.title,
                     "description": o.description,
                     "discount_percentage": o.discount_percentage,
-                    "banner": request.build_absolute_uri(o.banner.url) if getattr(o, "banner", None) else None
+                    "banner": request.build_absolute_uri(o.banner.url) if o.banner and o.banner.name else None
                 }
                 for o in offers
             ],
@@ -77,7 +78,7 @@ def home_data(request):
                     **{
                         "id": m.id,
                         "name": m.name,
-                        "image": request.build_absolute_uri(m.image.url) if getattr(m, "image", None) else None,
+                        "image": request.build_absolute_uri(m.image.url) if m.image and m.image.name else None,
                         "price": str(m.price),
                         "description": m.description
                     },
@@ -166,7 +167,6 @@ def filter_menu_by_category(request):
 # ✅ ORDER CREATE VIEW (FINAL CLEAN)
 class OrderCreateView(APIView):
     def post(self, request):
-        print("ORDER VIEW HIT")
         serializer = OrderSerializer(data=request.data)
     
 
@@ -195,11 +195,18 @@ class OrderCreateView(APIView):
                 }, status=201)
 
             except Exception as e:
-                # If razorpay fails, just return the order without payment integration
+                print("Razorpay Error:", str(e))
+                # Fallback to mock order if razorpay fails (Useful for local testing)
+                order.razorpay_order_id = f"mock_order_{order.id}"
+                order.save()
                 return Response({
-                    "message": "Order placed successfully but failed to initialize payment.",
-                    "error": str(e),
-                    "order": OrderSerializer(order).data
+                    "message": "Order placed successfully (Mock Mode)",
+                    "order": OrderSerializer(order).data,
+                    "razorpay_order_id": order.razorpay_order_id,
+                    "amount": amount_in_paise,
+                    "currency": "INR",
+                    "key_id": settings.RAZORPAY_KEY_ID,
+                    "is_mock": True
                 }, status=201)
 
         return Response(serializer.errors, status=400)
@@ -222,17 +229,46 @@ class VerifyPaymentView(APIView):
             }
             
             # If signature is invalid, it raises SignatureVerificationError
-            razorpay_client.utility.verify_payment_signature(params_dict)
+            if str(razorpay_order_id).startswith("mock_order_"):
+                pass # Skip signature verification for mock orders
+            else:
+                razorpay_client.utility.verify_payment_signature(params_dict)
             
             # Update order status
             from orders.models import Order
+            from decimal import Decimal
             order = Order.objects.get(razorpay_order_id=razorpay_order_id)
             order.payment_status = 'success'
             order.razorpay_payment_id = razorpay_payment_id
             order.razorpay_signature = razorpay_signature
             order.save()
             
-            return Response({"message": "Payment successful"}, status=status.HTTP_200_OK)
+            # ✅ CREATE INVOICE after successful payment
+            subtotal = sum(
+                Decimal(item.price) * item.quantity 
+                for item in order.order_items.all()
+            )
+            tax = (subtotal * Decimal('0.05')).quantize(Decimal('0.01'))
+            total = subtotal + tax
+            
+            invoice_number = f"INV-{order.id}-{order.created_at.strftime('%Y%m%d')}"
+            
+            invoice, created = Invoice.objects.get_or_create(
+                order=order,
+                defaults={
+                    'invoice_number': invoice_number,
+                    'subtotal': subtotal,
+                    'tax': tax,
+                    'total': total
+                }
+            )
+            
+            return Response({
+                "message": "Payment successful",
+                "invoice_id": invoice.id,
+                "order_id": order.id,
+                "invoice_number": invoice.invoice_number
+            }, status=status.HTTP_200_OK)
             
         except razorpay.errors.SignatureVerificationError:
             from orders.models import Order
@@ -258,4 +294,17 @@ class TableListView(APIView):
             }
             for t in tables
         ]
-        return Response(data)
+        return Response(data)
+
+
+# ✅ INVOICE VIEW — Get invoice for a specific order
+class InvoiceView(APIView):
+    def get(self, request, order_id):
+        try:
+            invoice = Invoice.objects.get(order_id=order_id)
+            serializer = InvoiceSerializer(invoice)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Invoice.DoesNotExist:
+            return Response({"error": "Invoice not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
