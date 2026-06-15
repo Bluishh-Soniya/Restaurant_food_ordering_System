@@ -12,19 +12,27 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 import os
-from dotenv import load_dotenv
 
 load_dotenv(override=True)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Explicitly load .env file from BASE_DIR
+env_path = os.path.join(str(BASE_DIR), '.env')
+
+# Manually parse the .env file if it exists, without needing external libraries
+if os.path.exists(env_path):
+    with open(env_path, 'r') as file:
+        for line in file:
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                key, value = line.split('=', 1)
+                os.environ.setdefault(key.strip(), value.strip())
+
 # Media files (User-uploaded files)
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
+MEDIA_ROOT = os.path.join(str(BASE_DIR), 'media')
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-09^i(ptv2@7wy0-29io=ps#_%!n9c2h4-1jvd=9_q20hyb-4$('
@@ -83,8 +91,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'Backendcode.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
+# Databas
 
 # ✅ USING SQLite (Simple & Fast)
 DATABASES = {
@@ -115,7 +122,6 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # Internationalization
-# https://docs.djangoproject.com/en/6.0/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
 

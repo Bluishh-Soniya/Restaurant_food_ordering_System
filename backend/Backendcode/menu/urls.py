@@ -4,6 +4,7 @@ from .views import home_data, OrderCreateView, TrendingItemsView, filter_menu_by
 urlpatterns = [
     path('home/', home_data),
     path('orders/', OrderCreateView.as_view()),
+    path('create-payment/', CreatePaymentView.as_view()),
     path('verify-payment/', VerifyPaymentView.as_view()),
     path("trending/", TrendingItemsView.as_view()),
     path('menu/filter/', filter_menu_by_category),

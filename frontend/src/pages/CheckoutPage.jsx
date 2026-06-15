@@ -1,6 +1,6 @@
 import React from "react";
 import { useCart } from "../context/CartContext";
-import { placeOrder, verifyPayment } from "../services/api";
+import { placeOrder, verifyPayment, createPayment } from "../services/api";
 import { useNavigate } from "react-router-dom";
 import { NotificationContext } from "../context/NotificationContext";
 import { useContext } from "react";
@@ -57,8 +57,9 @@ const CheckoutPage = () => {
         }))
       };
 
-      const orderRes = await placeOrder(orderData);
-      console.log("Order placed:", orderRes.data);
+      // 1. Create Payment Order first
+      const paymentRes = await createPayment({ items: orderData.items });
+      console.log("Payment initialized:", paymentRes.data);
 
       if (!orderRes.data.razorpay_order_id) {
         alert(`❌ Payment Initialization Failed: ${orderRes.data.message || 'Unknown Error'}`);
@@ -85,7 +86,7 @@ const CheckoutPage = () => {
         return;
       }
 
-      // Load Razorpay Script
+      // 2. Load Razorpay Script
       const res = await loadScript("https://checkout.razorpay.com/v1/checkout.js");
       
       if (!res) {
@@ -93,13 +94,14 @@ const CheckoutPage = () => {
         return;
       }
 
+      // 3. Open Razorpay Popup
       const options = {
         key: orderRes.data.key_id, // ✅ Always use backend key to prevent cache issues
         amount: orderRes.data.amount,
         currency: orderRes.data.currency,
         name: "RestroScan",
         description: "Payment for Order",
-        order_id: orderRes.data.razorpay_order_id,
+        order_id: paymentRes.data.razorpay_order_id,
         handler: async function (response) {
           try {
             const data = {
