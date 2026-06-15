@@ -61,6 +61,58 @@ class AdminDashboardStatsView(APIView):
         return Response({"stats": stats, "recent_orders": recent})
 
 
+class AdminFinanceView(APIView):
+    """Deep financial metrics for the admin dashboard"""
+    permission_classes = [IsAdminStaff]
+
+    def get(self, request):
+        today = timezone.now().date()
+        
+        # Only successful orders matter for revenue
+        successful_orders = Order.objects.filter(payment_status='success')
+        
+        total_revenue = float(successful_orders.aggregate(Sum('total_price'))['total_price__sum'] or 0)
+        today_orders = successful_orders.filter(created_at__date=today)
+        today_revenue = float(today_orders.aggregate(Sum('total_price'))['total_price__sum'] or 0)
+        
+        successful_count = successful_orders.count()
+        aov = float(total_revenue / successful_count) if successful_count > 0 else 0
+
+        # Calculate 7-day trend
+        trend = []
+        for i in range(6, -1, -1):
+            d = today - timedelta(days=i)
+            day_orders = successful_orders.filter(created_at__date=d)
+            rev = float(day_orders.aggregate(Sum('total_price'))['total_price__sum'] or 0)
+            trend.append({
+                "date": d.strftime("%b %d"),
+                "revenue": rev
+            })
+
+        # Recent transactions (last 20 successful)
+        recent_tx = successful_orders.order_by('-created_at')[:20]
+        
+        # Basic serialization for tx
+        transactions = []
+        for tx in recent_tx:
+            items_list = [{"name": item.item_name or item.menu_item.name, "quantity": item.quantity} for item in tx.order_items.all()]
+            transactions.append({
+                "id": tx.id,
+                "items": items_list,
+                "amount": float(tx.total_price),
+                "date": tx.created_at.strftime("%Y-%m-%d %H:%M"),
+                "razorpay_id": tx.razorpay_payment_id or "—"
+            })
+
+        return Response({
+            "total_revenue": total_revenue,
+            "today_revenue": today_revenue,
+            "aov": round(aov, 2),
+            "trend": trend,
+            "transactions": transactions
+        })
+
+
 class AdminOrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = AdminOrderSerializer

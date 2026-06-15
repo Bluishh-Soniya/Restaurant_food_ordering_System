@@ -16,8 +16,8 @@ class Category(models.Model):
     name = models.CharField(max_length=100)
 
     # ✅ NEW CATEGORY IMAGE FIELD
-    image = models.ImageField(
-        upload_to='categories/',
+    image = models.CharField(
+        max_length=1000,
         null=True,
         blank=True
     )

@@ -7,6 +7,7 @@ const API_URL = process.env.REACT_APP_API_URL || "http://127.0.0.1:8000/api/";
 
 const TABS = [
   { key: "dashboard", label: "Dashboard", icon: <LayoutDashboard size={18} /> },
+  { key: "finance", label: "Finance", icon: <IndianRupee size={18} /> },
   { key: "orders", label: "Orders", icon: <ClipboardList size={18} /> },
   { key: "menu-items", label: "Menu Items", icon: <Utensils size={18} /> },
   { key: "categories", label: "Categories", icon: <FolderOpen size={18} /> },
@@ -30,7 +31,15 @@ const AdminDashboard = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [categories, setCategories] = useState([]);
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState({
+    name: "", price: "", category: "", description: "", image: "",
+    is_available: true, is_recommended: false, is_trending: false
+  });
+
+  // Category CRUD State
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [categoryFormData, setCategoryFormData] = useState({ name: "", image: "" });
   
   const navigate = useNavigate();
   const token = localStorage.getItem("adminToken");
@@ -42,9 +51,26 @@ const AdminDashboard = () => {
     });
   }, [token]);
 
+  const fetchData = useCallback((tab = activeTab) => {
+    if (!token) return;
+    if (tab === "dashboard") {
+      api().get("stats/").then(res => setStats(res.data)).catch(handleAuthError);
+    } else if (tab === "finance") {
+      api().get("finance/").then(res => setData(res.data)).catch(handleAuthError);
+    } else {
+      api().get(`${tab}/`).then(res => setData(res.data)).catch(handleAuthError);
+    }
+  }, [api, activeTab, token]);
+
   useEffect(() => {
     if (!token) { navigate("/admin/login"); return; }
-  }, [token, navigate]);
+    fetchData();
+    
+    // Fetch categories for the Menu Item dropdown
+    if (activeTab === "menu-items") {
+      api().get("categories/").then(res => setCategories(res.data)).catch(console.error);
+    }
+  }, [activeTab, token, fetchData, api]);
 
   const handleAuthError = useCallback((err) => {
     if (err.response?.status === 401 || err.response?.status === 403) {
@@ -53,25 +79,10 @@ const AdminDashboard = () => {
     }
   }, [navigate]);
 
-  useEffect(() => {
-    if (!token) return;
-    if (activeTab === "dashboard") {
-      api().get("stats/").then(res => setStats(res.data)).catch(handleAuthError);
-    } else {
-      api().get(`${activeTab}/`).then(res => setData(res.data)).catch(handleAuthError);
-    }
-    
-    // Fetch categories for the Menu Item dropdown
-    if (activeTab === "menu-items") {
-      api().get("categories/").then(res => setCategories(res.data)).catch(console.error);
-    }
-  }, [activeTab, token, api, handleAuthError]);
-
   const handleStatusChange = async (orderId, newStatus) => {
     try {
       await api().patch(`orders/${orderId}/`, { status: newStatus });
-      // Refresh
-      api().get("orders/").then(res => setData(res.data));
+      fetchData("orders");
     } catch (err) {
       alert("Failed to update status");
     }
@@ -81,7 +92,7 @@ const AdminDashboard = () => {
     if (!window.confirm("Delete this item?")) return;
     try {
       await api().delete(`${endpoint}/${id}/`);
-      api().get(`${endpoint}/`).then(res => setData(res.data));
+      fetchData(endpoint);
     } catch (err) {
       alert("Delete failed");
     }
@@ -121,9 +132,31 @@ const AdminDashboard = () => {
         await api().post(`menu-items/`, payload);
       }
       setIsModalOpen(false);
-      api().get("menu-items/").then(res => setData(res.data));
+      fetchData("menu-items");
     } catch (err) {
       alert("Failed to save menu item. Check your inputs.");
+      console.error(err);
+    }
+  };
+
+  const openCategoryModal = (cat = null) => {
+    setEditingCategory(cat);
+    setCategoryFormData(cat ? { name: cat.name, image: cat.image || "" } : { name: "", image: "" });
+    setIsCategoryModalOpen(true);
+  };
+
+  const handleCategorySubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (editingCategory) {
+        await api().patch(`categories/${editingCategory.id}/`, categoryFormData);
+      } else {
+        await api().post(`categories/`, categoryFormData);
+      }
+      setIsCategoryModalOpen(false);
+      fetchData("categories");
+    } catch (err) {
+      alert("Failed to save category");
       console.error(err);
     }
   };
@@ -203,13 +236,19 @@ const AdminDashboard = () => {
           </tr>
         </thead>
         <tbody>
-          {data.map(o => (
+          {(Array.isArray(data) ? data : []).map(o => (
             <tr key={o.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
               <td style={{ padding: "12px", fontWeight: "600" }}>#{o.id}</td>
               <td style={{ padding: "12px", textTransform: "capitalize" }}>{o.order_type?.replace("_", " ")}</td>
               <td style={{ padding: "12px" }}>{o.table_number || "—"}</td>
-              <td style={{ padding: "12px", fontSize: "13px" }}>
-                {(o.items || []).map(i => `${i.item_name || i.menu_item_name} x${i.quantity}`).join(", ")}
+              <td style={{ padding: "12px" }}>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", maxWidth: "300px" }}>
+                  {o.items && o.items.length > 0 ? o.items.map((it, idx) => (
+                    <span key={idx} style={{ background: "#f3f4f6", border: "1px solid #e5e7eb", padding: "3px 8px", borderRadius: "6px", fontSize: "12px", color: "#374151", whiteSpace: "nowrap" }}>
+                      {it.item_name || it.menu_item_name} <span style={{ color: "#f97316", fontWeight: "700", marginLeft: "2px" }}>x{it.quantity}</span>
+                    </span>
+                  )) : <span style={{ color: "#9ca3af", fontStyle: "italic", fontSize: "12px" }}>No items</span>}
+                </div>
               </td>
               <td style={{ padding: "12px", fontWeight: "600" }}>₹{o.total_price}</td>
               <td style={{ padding: "12px" }}>
@@ -238,27 +277,108 @@ const AdminDashboard = () => {
           ))}
         </tbody>
       </table>
-      {data.length === 0 && <p style={{ textAlign: "center", padding: "40px", color: "#9ca3af" }}>No orders yet</p>}
+      {(!Array.isArray(data) || data.length === 0) && <p style={{ textAlign: "center", padding: "40px", color: "#9ca3af" }}>No orders yet</p>}
     </div>
   );
+
+  // FINANCE TAB
+  const renderFinance = () => {
+    if (!data || Array.isArray(data)) return <p>Loading finance data...</p>;
+    
+    // Max revenue for scaling the bar chart
+    const maxRev = Math.max(...(data.trend?.map(d => d.revenue) || [0]), 1);
+
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+        {/* KPI Cards */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "20px" }}>
+          <div style={{ background: "#fff", padding: "24px", borderRadius: "16px", borderLeft: "5px solid #22c55e", boxShadow: "0 4px 6px rgba(0,0,0,0.05)" }}>
+            <h3 style={{ fontSize: "14px", color: "#6b7280", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "1px" }}>Total Revenue</h3>
+            <p style={{ fontSize: "28px", fontWeight: "800", color: "#111", margin: 0 }}>₹{data.total_revenue}</p>
+          </div>
+          <div style={{ background: "#fff", padding: "24px", borderRadius: "16px", borderLeft: "5px solid #3b82f6", boxShadow: "0 4px 6px rgba(0,0,0,0.05)" }}>
+            <h3 style={{ fontSize: "14px", color: "#6b7280", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "1px" }}>Today's Revenue</h3>
+            <p style={{ fontSize: "28px", fontWeight: "800", color: "#111", margin: 0 }}>₹{data.today_revenue}</p>
+          </div>
+          <div style={{ background: "#fff", padding: "24px", borderRadius: "16px", borderLeft: "5px solid #f59e0b", boxShadow: "0 4px 6px rgba(0,0,0,0.05)" }}>
+            <h3 style={{ fontSize: "14px", color: "#6b7280", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "1px" }}>Avg Order Value</h3>
+            <p style={{ fontSize: "28px", fontWeight: "800", color: "#111", margin: 0 }}>₹{data.aov}</p>
+          </div>
+        </div>
+
+        {/* CSS Chart */}
+        <div style={{ background: "#fff", padding: "24px", borderRadius: "16px", boxShadow: "0 4px 6px rgba(0,0,0,0.05)" }}>
+          <h3 style={{ fontSize: "18px", fontWeight: "700", marginBottom: "20px" }}>7-Day Revenue Trend</h3>
+          <div style={{ display: "flex", alignItems: "flex-end", height: "200px", gap: "2%", paddingBottom: "30px", position: "relative", borderBottom: "1px solid #e5e7eb" }}>
+            {data.trend?.map((d, i) => (
+              <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", height: "100%", position: "relative" }}>
+                <div style={{ width: "60%", height: `${(d.revenue / maxRev) * 100}%`, background: "linear-gradient(to top, #3b82f6, #60a5fa)", borderRadius: "4px 4px 0 0", minHeight: "2px", transition: "height 0.5s ease" }} title={`₹${d.revenue}`}></div>
+                <span style={{ fontSize: "11px", color: "#6b7280", position: "absolute", bottom: "-25px", whiteSpace: "nowrap" }}>{d.date}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Transaction Ledger */}
+        <div style={{ background: "#fff", borderRadius: "16px", boxShadow: "0 4px 6px rgba(0,0,0,0.05)", overflow: "hidden" }}>
+          <div style={{ padding: "20px 24px", borderBottom: "1px solid #e5e7eb" }}>
+            <h3 style={{ fontSize: "18px", fontWeight: "700", margin: 0 }}>Recent Transactions</h3>
+          </div>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "600px" }}>
+              <thead>
+                <tr style={{ background: "#f9fafb" }}>
+                  <th style={{ padding: "14px 24px", textAlign: "left", fontSize: "13px", color: "#6b7280", fontWeight: "600" }}>Order ID</th>
+                  <th style={{ padding: "14px 24px", textAlign: "left", fontSize: "13px", color: "#6b7280", fontWeight: "600" }}>Items</th>
+                  <th style={{ padding: "14px 24px", textAlign: "left", fontSize: "13px", color: "#6b7280", fontWeight: "600" }}>Date</th>
+                  <th style={{ padding: "14px 24px", textAlign: "left", fontSize: "13px", color: "#6b7280", fontWeight: "600" }}>Amount</th>
+                  <th style={{ padding: "14px 24px", textAlign: "left", fontSize: "13px", color: "#6b7280", fontWeight: "600" }}>Razorpay Ref</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.transactions?.map((tx, idx) => (
+                  <tr key={idx} style={{ borderBottom: idx === data.transactions.length - 1 ? "none" : "1px solid #f3f4f6" }}>
+                    <td style={{ padding: "16px 24px", fontWeight: "600", color: "#111" }}>#{tx.id}</td>
+                    <td style={{ padding: "16px 24px" }}>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", maxWidth: "350px" }}>
+                        {tx.items && tx.items.length > 0 ? tx.items.map((it, i) => (
+                          <span key={i} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "2px 8px", borderRadius: "6px", fontSize: "12px", color: "#334155", whiteSpace: "nowrap" }}>
+                            {it.name} <span style={{ color: "#f97316", fontWeight: "700", marginLeft: "2px" }}>x{it.quantity}</span>
+                          </span>
+                        )) : <span style={{ color: "#9ca3af", fontStyle: "italic", fontSize: "13px" }}>No items</span>}
+                      </div>
+                    </td>
+                    <td style={{ padding: "16px 24px", color: "#4b5563", fontSize: "14px" }}>{tx.date}</td>
+                    <td style={{ padding: "16px 24px", fontWeight: "700", color: "#059669" }}>₹{tx.amount}</td>
+                    <td style={{ padding: "16px 24px", fontFamily: "monospace", fontSize: "12px", color: "#9ca3af" }}>{tx.razorpay_id}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // GENERIC TABLE (Menu Items / Categories)
   const renderGenericTable = (endpoint) => {
     const isMenu = endpoint === "menu-items";
+    const isCategory = endpoint === "categories";
     
     return (
       <div>
-        {isMenu && (
+        {(isMenu || isCategory) && (
           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "16px" }}>
             <button 
-              onClick={() => openMenuModal()}
+              onClick={() => isMenu ? openMenuModal() : openCategoryModal()}
               style={{
                 padding: "10px 20px", background: "#f97316", color: "white",
                 border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer",
                 boxShadow: "0 4px 6px rgba(249, 115, 22, 0.2)"
               }}
             >
-              + Add Menu Item
+              {isMenu ? "+ Add Menu Item" : "+ Add Category"}
             </button>
           </div>
         )}
@@ -279,7 +399,7 @@ const AdminDashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {data.map(row => (
+                {(Array.isArray(data) ? data : []).map(row => (
                   <tr key={row.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
                     {Object.keys(row).filter(k => typeof row[k] !== "object" && !["image", "banner", "qr_code"].includes(k)).map(k => (
                       <td key={k} style={{ padding: "12px", fontSize: "14px" }}>
@@ -287,8 +407,8 @@ const AdminDashboard = () => {
                       </td>
                     ))}
                     <td style={{ padding: "12px", display: "flex", gap: "8px" }}>
-                      {isMenu && (
-                        <button onClick={() => openMenuModal(row)} style={{
+                      {(isMenu || isCategory) && (
+                        <button onClick={() => isMenu ? openMenuModal(row) : openCategoryModal(row)} style={{
                           padding: "6px 14px", background: "#eff6ff", color: "#2563eb",
                           border: "1px solid #bfdbfe", borderRadius: "6px", cursor: "pointer",
                           fontSize: "13px", fontWeight: "500",
@@ -313,6 +433,7 @@ const AdminDashboard = () => {
   const renderContent = () => {
     switch (activeTab) {
       case "dashboard": return renderDashboard();
+      case "finance": return renderFinance();
       case "orders": return renderOrders();
       case "menu-items": return renderGenericTable("menu-items");
       case "categories": return renderGenericTable("categories");
@@ -457,6 +578,42 @@ const AdminDashboard = () => {
                   padding: "10px 20px", background: "#f97316", color: "#fff",
                   border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer"
                 }}>Save Item</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* CATEGORY CRUD MODAL */}
+      {isCategoryModalOpen && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+          background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center",
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: "#fff", width: "400px", borderRadius: "16px", padding: "32px",
+            boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)"
+          }}>
+            <h2 style={{ margin: "0 0 24px", fontSize: "20px", fontWeight: "700", color: "#1f2937" }}>
+              {editingCategory ? "Edit Category" : "Add Category"}
+            </h2>
+            <form onSubmit={handleCategorySubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <div>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#4b5563", marginBottom: "6px" }}>Category Name</label>
+                <input required type="text" value={categoryFormData.name} onChange={e => setCategoryFormData({...categoryFormData, name: e.target.value})}
+                  style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "14px" }} />
+              </div>
+              
+              <div>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#4b5563", marginBottom: "6px" }}>Image URL (Online Link Only)</label>
+                <input type="url" placeholder="https://images.unsplash.com/..." value={categoryFormData.image} onChange={e => setCategoryFormData({...categoryFormData, image: e.target.value})}
+                  style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "14px" }} />
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "16px" }}>
+                <button type="button" onClick={() => setIsCategoryModalOpen(false)} style={{ padding: "10px 16px", background: "#f3f4f6", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "600", color: "#4b5563" }}>Cancel</button>
+                <button type="submit" style={{ padding: "10px 16px", background: "#f97316", color: "white", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "600" }}>Save</button>
               </div>
             </form>
           </div>

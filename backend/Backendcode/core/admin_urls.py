@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .admin_views import (
-    AdminLoginView, AdminDashboardStatsView,
+    AdminLoginView, AdminDashboardStatsView, AdminFinanceView,
     AdminOrderViewSet, AdminMenuItemViewSet,
     AdminCategoryViewSet, AdminTableViewSet,
 )
@@ -15,5 +15,6 @@ router.register(r'tables', AdminTableViewSet, basename='admin-tables')
 urlpatterns = [
     path('login/', AdminLoginView.as_view(), name='admin-login'),
     path('stats/', AdminDashboardStatsView.as_view(), name='admin-stats'),
+    path('finance/', AdminFinanceView.as_view(), name='admin-finance'),
     path('', include(router.urls)),
 ]

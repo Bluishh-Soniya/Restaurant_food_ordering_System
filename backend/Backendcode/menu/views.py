@@ -30,7 +30,7 @@ def home_data(request):
                 {
                     "id": c.id,
                     "name": c.name,
-                    "image": request.build_absolute_uri(c.image.url) if c.image and c.image.name else None
+                    "image": str(c.image) if c.image and str(c.image).startswith('http') else (request.build_absolute_uri(f'/media/{c.image}') if c.image else None)
                 }
                 for c in categories
             ],
