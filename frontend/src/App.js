@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Footer from "./components/footer/footer";
 import Home from "./pages/Home";
@@ -15,6 +15,13 @@ import { NotificationProvider } from "./context/NotificationContext";
 
 function App() {
   const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    // Ensure tableNumber starts at 1 if not already set by scanning a QR
+    if (!localStorage.getItem("tableNumber") || localStorage.getItem("tableNumber") === "undefined" || localStorage.getItem("tableNumber") === "null") {
+      localStorage.setItem("tableNumber", "1");
+    }
+  }, []);
 
   return (
     <BrowserRouter>

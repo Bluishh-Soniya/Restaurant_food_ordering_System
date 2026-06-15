@@ -1,6 +1,6 @@
 import React from "react";
 import { useCart } from "../context/CartContext";
-import { placeOrder, verifyPayment } from "../services/api";
+import { placeOrder, verifyPayment, createPayment } from "../services/api";
 import { useNavigate } from "react-router-dom";
 
 const TAX_RATE = 0.05; // 5% GST — same as CartPage
@@ -29,7 +29,12 @@ const CheckoutPage = () => {
 
   const handleOrder = async () => {
     try {
-      // ✅ Read table number from localStorage (set when QR was scanned)
+      if (!cart || cart.length === 0) {
+        alert("Your cart is empty! Please add some items before checking out.");
+        return;
+      }
+
+      // ✅ Read table number from localStorage
       const tableNumber = localStorage.getItem("tableNumber");
 
       if (!tableNumber || tableNumber === "undefined" || tableNumber === "null") {
@@ -46,18 +51,16 @@ const CheckoutPage = () => {
         }))
       };
 
-      const orderRes = await placeOrder(orderData);
-      console.log("Order placed:", orderRes.data);
+      // 1. Create Payment Order first
+      const paymentRes = await createPayment({ items: orderData.items });
+      console.log("Payment initialized:", paymentRes.data);
 
-      if (!orderRes.data.razorpay_order_id) {
-        // Fallback if Razorpay is not configured or failed to initialize
-        clearCart();
-        alert(`✅ Order placed!\nTable: ${tableNumber || "N/A"}\nTotal (incl. tax): ₹${finalTotal}`);
-        navigate("/");
+      if (!paymentRes.data.razorpay_order_id) {
+        alert("Failed to initialize payment.");
         return;
       }
 
-      // Load Razorpay Script
+      // 2. Load Razorpay Script
       const res = await loadScript("https://checkout.razorpay.com/v1/checkout.js");
       
       if (!res) {
@@ -65,27 +68,42 @@ const CheckoutPage = () => {
         return;
       }
 
+      // 3. Open Razorpay Popup
       const options = {
-        key: process.env.REACT_APP_RAZORPAY_KEY_ID || orderRes.data.key_id,
-        amount: orderRes.data.amount,
-        currency: orderRes.data.currency,
+        key: process.env.REACT_APP_RAZORPAY_KEY_ID || paymentRes.data.key_id,
+        amount: paymentRes.data.amount,
+        currency: paymentRes.data.currency,
         name: "RestroScan",
         description: "Payment for Order",
-        order_id: orderRes.data.razorpay_order_id,
+        order_id: paymentRes.data.razorpay_order_id,
         handler: async function (response) {
           try {
-            const data = {
+            const verificationData = {
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_order_id: response.razorpay_order_id,
               razorpay_signature: response.razorpay_signature,
             };
-            const result = await verifyPayment(data);
-            alert("✅ " + result.data.message);
-            clearCart();
-            navigate("/");
+            
+            // 4. Verify Payment
+            const verifyRes = await verifyPayment(verificationData);
+            
+            if (verifyRes.status === 200) {
+                // 5. Place Order after verification
+                const finalOrderData = {
+                  ...orderData,
+                  ...verificationData
+                };
+                
+                const orderRes = await placeOrder(finalOrderData);
+                console.log("Order placed:", orderRes.data);
+                
+                alert("✅ Order Placed Successfully!");
+                clearCart();
+                navigate("/");
+            }
           } catch (err) {
-            console.error(err);
-            alert("Payment verification failed!");
+            console.error("Verification/Order Error:", err);
+            alert("Payment verified but order creation failed, or verification failed!");
           }
         },
         prefill: {

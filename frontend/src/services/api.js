@@ -30,6 +30,11 @@ export const placeOrder = (data) => {
   return API.post("orders/", data);
 };
 
+// CREATE PAYMENT
+export const createPayment = (data) => {
+  return API.post("create-payment/", data);
+};
+
 // VERIFY PAYMENT
 export const verifyPayment = (data) => {
   return API.post("verify-payment/", data);
