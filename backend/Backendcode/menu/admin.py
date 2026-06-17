@@ -12,7 +12,7 @@ class CategoryAdmin(admin.ModelAdmin):
     
     def image_preview(self, obj):
         if obj.image:
-            return format_html('<img src="{}" width="50" height="50" style="border-radius:5px;" />', obj.image.url)
+            return format_html('<img src="{}" width="50" height="50" style="border-radius:5px;" />', obj.image)
         return "No Image"
     image_preview.short_description = 'Preview'
 
@@ -25,7 +25,7 @@ class MenuItemAdmin(admin.ModelAdmin):
     
     def image_preview(self, obj):
         if obj.image:
-            return format_html('<img src="{}" width="50" height="50" style="border-radius:5px;" />', obj.image.url)
+            return format_html('<img src="{}" width="50" height="50" style="border-radius:5px;" />', obj.image)
         return "No Image"
     image_preview.short_description = 'Preview'
 
