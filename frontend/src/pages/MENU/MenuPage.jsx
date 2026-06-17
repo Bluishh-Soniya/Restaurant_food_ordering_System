@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
-import { fetchMenuByCategory } from "../../services/api";
+import { fetchMenuItems } from "../../services/api";
 import { useCart } from "../../context/CartContext";
 import { NotificationContext } from "../../context/NotificationContext";
 import { FaArrowLeft } from "react-icons/fa";
+import { Utensils } from "lucide-react";
 
 const MenuPage = () => {
   const { categoryId } = useParams();
@@ -15,7 +16,7 @@ const MenuPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const categoryName = location.state?.categoryName || `Category ${categoryId}`;
+  const categoryName = location.state?.categoryName || categoryId;
 
   // ✅ HANDLE ADD TO CART WITH NOTIFICATION
   const handleAddToCart = (item) => {
@@ -54,7 +55,8 @@ const MenuPage = () => {
     const loadCategoryMenu = async () => {
       try {
         setLoading(true);
-        const response = await fetchMenuByCategory(categoryId);
+        // Note: categoryName is used because our API now filters by name instead of ID
+        const response = await fetchMenuItems(1, categoryName, "");
         setMenuItems(response.data.menu || []);
         setError(null);
       } catch (err) {
@@ -65,10 +67,10 @@ const MenuPage = () => {
       }
     };
 
-    if (categoryId) {
+    if (categoryName) {
       loadCategoryMenu();
     }
-  }, [categoryId]);
+  }, [categoryName]);
 
   if (loading) {
     return (
@@ -163,7 +165,7 @@ const MenuPage = () => {
             color: "#111",
           }}
         >
-          🍽️ {categoryName}
+          <Utensils size={32} style={{ marginRight: "12px", color: "#1e3a8a", verticalAlign: "middle" }} /> {categoryName}
         </h1>
 
         <p
@@ -200,7 +202,7 @@ const MenuPage = () => {
               onClick={() => navigate("/")}
               style={{
                 padding: "12px 30px",
-                backgroundColor: "#ff5722",
+                backgroundColor: "#f97316",
                 color: "white",
                 border: "none",
                 borderRadius: "8px",
@@ -215,181 +217,107 @@ const MenuPage = () => {
           </div>
         ) : (
 
-          /* ✅ RESPONSIVE FOOD GRID */
-          <div className="food-grid">
-            {menuItems.map((item) => {
-              const cartItem = cart.find((c) => c.id === item.id);
+          /* Swiggy Style Menu List */
+          <div style={{ background: "white", borderRadius: "24px", padding: "10px", boxShadow: "0 10px 40px rgba(0,0,0,0.03)" }}>
+            {menuItems.map((item, index) => {
+              const cartItem = cart.find(c => c.id === item.id);
+              const isLast = index === menuItems.length - 1;
+              const nonVegWords = ['chicken', 'mutton', 'beef', 'fish', 'prawn', 'egg', 'meat'];
+              const veg = !nonVegWords.some(word => item.name.toLowerCase().includes(word));
 
               return (
                 <div
                   key={item.id}
-                  className="fade-up food-card"
                   style={{
                     display: "flex",
-                    flexDirection: "column",
-                    background: "#ffffff",
-                    overflow: "hidden",
-                    borderRadius: "18px",
-                    boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-                    border: "1px solid #f0f0f0",
-                    transition: "all 0.3s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.12)";
-                    e.currentTarget.style.transform = "translateY(-5px)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
-                    e.currentTarget.style.transform = "translateY(0)";
+                    padding: "24px 16px",
+                    borderBottom: isLast ? "none" : "1px dashed #e2e8f0",
+                    gap: "20px"
                   }}
                 >
-                  {/* IMAGE */}
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    style={{
-                      width: "100%",
-                      height: "160px",
-                      objectFit: "cover",
-                      display: "block",
-                    }}
-                    onError={(e) => {
-                      e.target.src = "https://via.placeholder.com/280x160?text=No+Image";
-                    }}
-                  />
+                  {/* Left Side: Info */}
+                  <div style={{ flex: 1 }}>
+                    {/* Veg/Non-Veg Icon */}
+                    <div style={{ 
+                      width: "16px", height: "16px", border: `1px solid ${veg ? '#16a34a' : '#dc2626'}`, 
+                      display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "4px",
+                      marginBottom: "8px"
+                    }}>
+                      <div style={{ 
+                        width: "8px", height: "8px", background: veg ? '#16a34a' : '#dc2626', 
+                        borderRadius: veg ? "50%" : "2px" 
+                      }}></div>
+                    </div>
 
-                  {/* CONTENT */}
-                  <div style={{ padding: "14px", flex: 1, display: "flex", flexDirection: "column" }}>
-
-                    {/* NAME */}
-                    <p
-                      style={{
-                        fontWeight: "bold",
-                        fontSize: "15px",
-                        color: "#222",
-                        marginBottom: "6px",
-                      }}
-                    >
+                    {/* Name */}
+                    <h3 style={{ fontSize: "18px", fontWeight: "800", color: "#334155", marginBottom: "6px" }}>
                       {item.name}
-                    </p>
+                    </h3>
 
-                    {/* DESCRIPTION */}
-                    {item.description && (
-                      <p
-                        style={{
-                          fontSize: "13px",
-                          color: "#888",
-                          marginBottom: "8px",
-                          lineHeight: "1.4",
-                          maxHeight: "40px",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          display: "-webkit-box",
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: "vertical",
-                        }}
-                      >
-                        {item.description}
-                      </p>
-                    )}
-
-                    {/* PRICE + BUTTON */}
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        marginTop: "auto",
-                      }}
-                    >
-                      {/* PRICE */}
-                      <span
-                        style={{
-                          fontWeight: "bold",
-                          color: "#333",
-                          fontSize: "14px",
-                        }}
-                      >
-                        {item.discount_percentage > 0 ? (
-                          <>
-                            <span
-                              style={{
-                                textDecoration: "line-through",
-                                color: "#999",
-                                fontSize: "13px",
-                                marginRight: "4px",
-                              }}
-                            >
-                              ₹{item.price}
-                            </span>
-                            <span style={{ color: "#ff5722" }}>
-                              ₹{item.final_price}
-                            </span>
-                          </>
-                        ) : (
-                          <>₹{item.price}</>
-                        )}
-                      </span>
-
-                      {/* ADD BUTTON */}
-                      {!cartItem ? (
-                        <button
-                          onClick={() => handleAddToCart(item)}
-                          className="btn"
-                          style={{
-                            padding: "8px 14px",
-                            fontSize: "13px",
-                          }}
-                        >
-                          ADD+
-                        </button>
-                      ) : (
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                          }}
-                        >
-                          <button
-                            onClick={() => handleDecreaseQty(item.id, item.name)}
-                            style={{
-                              padding: "6px 10px",
-                              borderRadius: "4px",
-                              border: "none",
-                              background: "#ddd",
-                              cursor: "pointer",
-                              fontSize: "14px",
-                              fontWeight: "600",
-                              color: "#333",
-                            }}
-                          >
-                            −
-                          </button>
-
-                          <span style={{ fontWeight: "bold", minWidth: "20px", textAlign: "center" }}>
-                            {cartItem.quantity}
+                    {/* Price */}
+                    <div style={{ fontWeight: "700", color: "#0f172a", fontSize: "16px", marginBottom: "10px" }}>
+                      {item.discount_percentage > 0 ? (
+                        <>
+                          ₹{item.final_price}{" "}
+                          <span style={{ textDecoration: "line-through", color: "#94a3b8", fontSize: "14px", fontWeight: "500" }}>
+                            ₹{item.price}
                           </span>
-
-                          <button
-                            onClick={() => increaseQty(item.id)}
-                            style={{
-                              padding: "6px 10px",
-                              borderRadius: "4px",
-                              border: "none",
-                              background: "#ff5722",
-                              color: "#fff",
-                              cursor: "pointer",
-                              fontSize: "14px",
-                              fontWeight: "600",
-                            }}
-                          >
-                            +
-                          </button>
-                        </div>
+                        </>
+                      ) : (
+                        <>₹{item.price}</>
                       )}
                     </div>
 
+                    {/* Rating & Best Seller Tag */}
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "#16a34a", fontWeight: "700", fontSize: "13px" }}>
+                        ⭐ 4.2 (1K+)
+                      </div>
+                      {item.is_recommended && (
+                        <span style={{ background: "#fef3c7", color: "#d97706", padding: "2px 6px", borderRadius: "4px", fontSize: "11px", fontWeight: "800" }}>
+                          BESTSELLER
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Description */}
+                    <p style={{ color: "#64748b", fontSize: "14px", lineHeight: "1.5", display: "-webkit-box", WebkitLineClamp: "2", WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                      {item.description}
+                    </p>
+                  </div>
+
+                  {/* Right Side: Image & Add Button */}
+                  <div style={{ position: "relative", width: "140px", height: "140px", flexShrink: 0 }}>
+                    <img
+                      src={item.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c"}
+                      alt={item.name}
+                      style={{
+                        width: "100%", height: "100%", objectFit: "cover", borderRadius: "16px",
+                        boxShadow: "0 4px 12px rgba(0,0,0,0.05)"
+                      }}
+                      onError={(e) => {
+                        e.target.src = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c";
+                      }}
+                    />
+
+                    {/* Floating ADD Button */}
+                    <div style={{ position: "absolute", bottom: "-12px", left: "50%", transform: "translateX(-50%)", width: "110px" }}>
+                      {!cartItem ? (
+                        <button
+                          onClick={() => handleAddToCart(item)}
+                          className="swiggy-add-btn"
+                        >
+                          ADD
+                          <div style={{ position: "absolute", top: "2px", right: "6px", fontSize: "10px", color: "#16a34a", fontWeight: "800" }}>+</div>
+                        </button>
+                      ) : (
+                        <div className="swiggy-qty-control">
+                          <button onClick={() => handleDecreaseQty(item.id, item.name)} className="qty-btn">−</button>
+                          <span style={{ fontWeight: "800", color: "#16a34a", fontSize: "15px" }}>{cartItem.quantity}</span>
+                          <button onClick={() => increaseQty(item.id)} className="qty-btn">+</button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
@@ -398,6 +326,55 @@ const MenuPage = () => {
 
         )}
       </div>
+
+      <style>{`
+        .swiggy-add-btn {
+          width: 100%;
+          background: white;
+          color: #16a34a;
+          border: 1px solid #e2e8f0;
+          padding: 8px 0;
+          border-radius: 8px;
+          font-weight: 800;
+          font-size: 16px;
+          cursor: pointer;
+          box-shadow: 0 4px 8px rgba(0,0,0,0.06);
+          position: relative;
+          transition: all 0.2s ease;
+          text-align: center;
+        }
+        .swiggy-add-btn:hover {
+          background: #f0fdf4;
+          box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+        }
+        .swiggy-qty-control {
+          width: 100%;
+          background: white;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 4px 8px;
+          box-shadow: 0 4px 8px rgba(0,0,0,0.06);
+        }
+        .qty-btn {
+          background: transparent;
+          border: none;
+          color: #64748b;
+          font-size: 20px;
+          font-weight: 600;
+          cursor: pointer;
+          width: 24px;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .qty-btn:hover {
+          color: #16a34a;
+        }
+      `}</style>
     </section>
   );
 };

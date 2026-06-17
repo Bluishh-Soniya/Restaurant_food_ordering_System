@@ -15,9 +15,14 @@ export const fetchTrendingData = () => {
   return API.get("trending/");
 };
 
-// ✅ FETCH MENU BY CATEGORY
-export const fetchMenuByCategory = (categoryId, restaurantId = 1) => {
-  return API.get(`menu/filter/?category_id=${categoryId}&restaurant=${restaurantId}`);
+// ✅ FETCH MENU WITH FILTER & SEARCH
+export const fetchMenuItems = (restaurantId = 1, category = "All", search = "") => {
+  const params = new URLSearchParams({
+    restaurant: restaurantId,
+    category: category,
+    search: search
+  });
+  return API.get(`menu/items/?${params.toString()}`);
 };
 
 // FETCH ALL ACTIVE TABLES (with QR code URLs)

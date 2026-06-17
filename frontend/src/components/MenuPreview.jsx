@@ -1,4 +1,5 @@
 import React from "react";
+import { ClipboardList } from "lucide-react";
 import { useCart } from "../context/CartContext";
 
 const MenuPreview = ({ data }) => {
@@ -12,7 +13,7 @@ const MenuPreview = ({ data }) => {
     <section className="section container">
 
       <h2 className="heading">
-        📋 Menu Preview
+        <ClipboardList size={20} style={{ marginRight: "6px", verticalAlign: "middle" }} /> Menu Preview
       </h2>
 
       {/* SAFE GRID */}

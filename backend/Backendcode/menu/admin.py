@@ -3,11 +3,38 @@ from django.utils.html import format_html
 from .models import Restaurant, Category, MenuItem, Offer, Banner, Table
 
 admin.site.register(Restaurant)
-admin.site.register(Category)
-admin.site.register(MenuItem)
-admin.site.register(Offer)
 admin.site.register(Banner)
 
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ['name', 'image_preview']
+    search_fields = ['name']
+    
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" width="50" height="50" style="border-radius:5px;" />', obj.image)
+        return "No Image"
+    image_preview.short_description = 'Preview'
+
+@admin.register(MenuItem)
+class MenuItemAdmin(admin.ModelAdmin):
+    list_display = ['name', 'restaurant', 'category', 'price', 'is_available', 'is_recommended', 'is_trending', 'image_preview']
+    list_filter = ['restaurant', 'category', 'is_available', 'is_recommended', 'is_trending']
+    search_fields = ['name', 'description']
+    list_editable = ['price', 'is_available', 'is_recommended', 'is_trending']
+    
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" width="50" height="50" style="border-radius:5px;" />', obj.image)
+        return "No Image"
+    image_preview.short_description = 'Preview'
+
+@admin.register(Offer)
+class OfferAdmin(admin.ModelAdmin):
+    list_display = ['title', 'menu_item', 'discount_percentage', 'is_active', 'start_date', 'end_date']
+    list_filter = ['is_active', 'start_date', 'end_date']
+    search_fields = ['title', 'menu_item__name']
+    list_editable = ['is_active', 'discount_percentage']
 
 @admin.register(Table)
 class TableAdmin(admin.ModelAdmin):
