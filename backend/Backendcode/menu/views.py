@@ -8,7 +8,7 @@ import razorpay
 razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
 from .models import Category, MenuItem, Offer, Banner, Table
-from orders.serializers import OrderSerializer
+from orders.serializers import OrderItemSerializer
 from .serializers import MenuItemSerializer
 from .utils import get_discounted_price
 
@@ -168,21 +168,11 @@ from decimal import Decimal
 class CreatePaymentView(APIView):
     def post(self, request):
         try:
-            items_data = request.data.get('items', [])
-            if not items_data:
-                return Response({"error": "No items provided"}, status=400)
+            total_price = request.data.get('total_price')
+            if not total_price:
+                return Response({"error": "No total_price provided"}, status=400)
 
-            subtotal = Decimal("0")
-            for item in items_data:
-                menu_item = MenuItem.objects.get(id=item['menu_item'])
-                quantity = item['quantity']
-                price_data = get_discounted_price(menu_item)
-                final_price = Decimal(str(price_data["final_price"]))
-                subtotal += final_price * quantity
-            
-            tax = (subtotal * Decimal("0.05")).quantize(Decimal("0.01"))
-            total_with_tax = subtotal + tax
-            amount_in_paise = int(total_with_tax * 100)
+            amount_in_paise = int(float(total_price) * 100)
 
             razorpay_order = razorpay_client.order.create({
                 "amount": amount_in_paise,
@@ -204,26 +194,20 @@ class CreatePaymentView(APIView):
 class OrderCreateView(APIView):
     def post(self, request):
         print("ORDER VIEW HIT")
-        serializer = OrderSerializer(data=request.data)
+        serializer = OrderItemSerializer(data=request.data)
     
         if serializer.is_valid():
-            order = serializer.save()
+            order_item = serializer.save()
 
-            # Just save payment info if provided
-            razorpay_order_id = request.data.get('razorpay_order_id')
+            # Mark payment as success if Razorpay verification data was sent
             razorpay_payment_id = request.data.get('razorpay_payment_id')
-            razorpay_signature = request.data.get('razorpay_signature')
-            
-            if razorpay_order_id and razorpay_payment_id and razorpay_signature:
-                order.razorpay_order_id = razorpay_order_id
-                order.razorpay_payment_id = razorpay_payment_id
-                order.razorpay_signature = razorpay_signature
-                order.payment_status = 'success'
-                order.save()
+            if razorpay_payment_id:
+                order_item.payment_status = 'success'
+                order_item.save()
 
             return Response({
                 "message": "Order placed successfully",
-                "order": OrderSerializer(order).data
+                "order": OrderItemSerializer(order_item).data
             }, status=201)
 
         return Response(serializer.errors, status=400)

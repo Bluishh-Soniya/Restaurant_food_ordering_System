@@ -1,8 +1,7 @@
 from django.db import models
 from menu.models import Restaurant, MenuItem
 
-
-class Order(models.Model):
+class OrderItem(models.Model):
     ORDER_TYPE = (
         ('dine_in', 'Dine In'),
         ('parcel', 'Parcel')
@@ -15,50 +14,53 @@ class Order(models.Model):
         ('delivered', 'Delivered'),
     )
 
-    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
+    PAYMENT_STATUS = (
+        ('pending', 'Pending'),
+        ('success', 'Success'),
+        ('failed', 'Failed')
+    )
+
+    # 1. ID is implicit in Django
+    # 2. Table No
     table = models.ForeignKey(
         'menu.Table',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='orders'
+        related_name='order_items'
     )
-
+    
+    # 3. Order Type
     order_type = models.CharField(
         max_length=20,
         choices=ORDER_TYPE,
         default='dine_in'
     )
-
+    
+    # 4. Item Names
+    item_names = models.CharField(max_length=1000, blank=True, null=True)
+    
+    # 5. Total Price
     total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-
+    
+    # 6. Status
     status = models.CharField(max_length=20, choices=STATUS, default='pending')
-    item_names = models.CharField(max_length=500, blank=True, null=True)
-
+    
+    # 7. Payment Status
     payment_status = models.CharField(
         max_length=20,
-        choices=(
-            ('pending', 'Pending'),
-            ('success', 'Success'),
-            ('failed', 'Failed')
-        ),
+        choices=PAYMENT_STATUS,
         default='pending'
     )
-    razorpay_order_id = models.CharField(max_length=100, blank=True, null=True)
-    razorpay_payment_id = models.CharField(max_length=100, blank=True, null=True)
-    razorpay_signature = models.CharField(max_length=200, blank=True, null=True)
+    
+    # 8. Date (date only, no time)
+    created_at = models.DateField(auto_now_add=True)
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    # 9. Restaurant reference
+    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, default=1)
+
+    class Meta:
+        ordering = ['-created_at']  # Task 3: Recent orders always show first
 
     def __str__(self):
-        return f"Order {self.id}"
-
-
-class OrderItem(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="order_items")
-    menu_item = models.ForeignKey(MenuItem, on_delete=models.CASCADE, related_name="order_items")
-
-    quantity = models.IntegerField()
-
-    item_name = models.CharField(max_length=200, blank=True, null=True)
-    price = models.DecimalField(max_digits=10, decimal_places=2)
+        return f"OrderItem {self.id}"

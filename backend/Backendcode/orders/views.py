@@ -1,11 +1,11 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .serializers import OrderSerializer
+from .serializers import OrderItemSerializer
 
 
 @api_view(['POST'])
 def create_order(request):
-    serializer = OrderSerializer(data=request.data)
+    serializer = OrderItemSerializer(data=request.data)
 
     if serializer.is_valid():
         serializer.save()

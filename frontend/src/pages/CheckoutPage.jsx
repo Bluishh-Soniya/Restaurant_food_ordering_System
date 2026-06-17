@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { useCart } from "../context/CartContext";
 import { placeOrder, verifyPayment, createPayment } from "../services/api";
 import { useNavigate } from "react-router-dom";
+import { FiCheckCircle, FiPrinter, FiHome } from "react-icons/fi";
 
 const TAX_RATE = 0.05; // 5% GST — same as CartPage
 
@@ -22,6 +23,8 @@ const loadScript = (src) => {
 const CheckoutPage = () => {
   const { cart, totalPrice, clearCart } = useCart();
   const navigate = useNavigate();
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [orderDetails, setOrderDetails] = useState(null);
 
   // ✅ Mirror CartPage tax calculation exactly
   const tax = parseFloat((totalPrice * TAX_RATE).toFixed(2));
@@ -42,17 +45,17 @@ const CheckoutPage = () => {
         return;
       }
 
+      const itemNames = cart.map(i => `${i.quantity}x ${i.name}`).join(", ");
+
       const orderData = {
         order_type: "dine_in",
         table_number: parseInt(tableNumber, 10),
-        items: cart.map(i => ({
-          menu_item: i.id,
-          quantity: i.quantity
-        }))
+        item_names: itemNames,
+        total_price: finalTotal
       };
 
       // 1. Create Payment Order first
-      const paymentRes = await createPayment({ items: orderData.items });
+      const paymentRes = await createPayment({ total_price: finalTotal });
       console.log("Payment initialized:", paymentRes.data);
 
       if (!paymentRes.data.razorpay_order_id) {
@@ -97,9 +100,17 @@ const CheckoutPage = () => {
                 const orderRes = await placeOrder(finalOrderData);
                 console.log("Order placed:", orderRes.data);
                 
-                alert("✅ Order Placed Successfully!");
+                // Set the receipt data and switch UI to success mode
+                setOrderDetails({
+                  id: orderRes.data.order.id,
+                  items: [...cart],
+                  subtotal: totalPrice,
+                  tax: tax,
+                  total: finalTotal,
+                  date: new Date()
+                });
+                setIsSuccess(true);
                 clearCart();
-                navigate("/");
             }
           } catch (err) {
             console.error("Verification/Order Error:", err);
@@ -124,6 +135,98 @@ const CheckoutPage = () => {
       alert("Something went wrong placing your order. Please try again.");
     }
   };
+
+  if (isSuccess && orderDetails) {
+    return (
+      <div className="page-wrapper" style={{ background: "#f5f5f5", padding: "40px 20px", minHeight: "100vh" }}>
+        <style>{`
+          @media print {
+            body * { visibility: hidden; }
+            #receipt-area, #receipt-area * { visibility: visible; }
+            #receipt-area { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; }
+            .no-print { display: none !important; }
+            @page { margin: 0; }
+            body { margin: 1.6cm; }
+          }
+        `}</style>
+        <div id="receipt-area" style={{ maxWidth: "500px", margin: "0 auto" }}>
+          
+          {/* Success Header Card */}
+          <div style={{ background: "#fff", borderRadius: "12px", padding: "30px", textAlign: "center", marginBottom: "20px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "70px", height: "70px", borderRadius: "50%", background: "#e8f5e9", marginBottom: "16px" }}>
+              <FiCheckCircle size={40} color="#00b894" />
+            </div>
+            <h2 style={{ color: "#00b894", fontSize: "24px", fontWeight: "bold", margin: "0 0 8px 0" }}>Payment Successful!</h2>
+            <p style={{ color: "#666", margin: 0 }}>Your order has been placed successfully. Below is your bill.</p>
+          </div>
+          
+          {/* Receipt Card */}
+          <div style={{ background: "#fff", borderRadius: "12px", padding: "30px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
+            <div style={{ textAlign: "center", marginBottom: "24px" }}>
+              <h3 style={{ fontSize: "22px", fontWeight: "bold", margin: "0 0 8px 0", color: "#1e293b" }}>RESTROSCAN</h3>
+              <p style={{ margin: "0 0 4px 0", color: "#64748b", fontSize: "14px" }}>Order #{orderDetails.id}</p>
+              <p style={{ margin: "0 0 4px 0", color: "#94a3b8", fontSize: "13px" }}>
+                Invoice #INV-{orderDetails.id}-{orderDetails.date.toISOString().split('T')[0].replace(/-/g, '')}
+              </p>
+              <p style={{ margin: 0, color: "#94a3b8", fontSize: "13px" }}>
+                {orderDetails.date.toLocaleString()}
+              </p>
+            </div>
+
+            <hr style={{ border: "none", borderTop: "1px dashed #cbd5e1", margin: "0 0 16px 0" }} />
+
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px", marginBottom: "16px" }}>
+              <thead>
+                <tr style={{ color: "#1e293b", fontWeight: "bold", borderBottom: "1px solid #f1f5f9" }}>
+                  <td style={{ padding: "8px 0", textAlign: "left" }}>Item</td>
+                  <td style={{ padding: "8px 0", textAlign: "center" }}>Qty</td>
+                  <td style={{ padding: "8px 0", textAlign: "right" }}>Price</td>
+                </tr>
+              </thead>
+              <tbody>
+                {orderDetails.items.map(item => {
+                  const displayPrice = item.final_price || item.price;
+                  return (
+                    <tr key={item.id} style={{ borderBottom: "1px solid #f8fafc" }}>
+                      <td style={{ padding: "12px 0", color: "#334155" }}>{item.name}</td>
+                      <td style={{ padding: "12px 0", textAlign: "center", color: "#64748b" }}>{item.quantity}</td>
+                      <td style={{ padding: "12px 0", textAlign: "right", color: "#334155" }}>₹{(displayPrice * item.quantity).toFixed(2)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", color: "#64748b", marginBottom: "8px" }}>
+              <span>Subtotal</span>
+              <span>₹{orderDetails.subtotal.toFixed(2)}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", color: "#64748b", marginBottom: "16px" }}>
+              <span>Tax</span>
+              <span>₹{orderDetails.tax.toFixed(2)}</span>
+            </div>
+
+            <hr style={{ border: "none", borderTop: "1px dashed #cbd5e1", margin: "0 0 16px 0" }} />
+
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "18px", fontWeight: "bold", color: "#0f172a" }}>
+              <span>Total</span>
+              <span>₹{orderDetails.total.toFixed(2)}</span>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="no-print" style={{ display: "flex", gap: "16px", marginTop: "24px" }}>
+            <button onClick={() => window.print()} style={{ flex: 1, padding: "14px", background: "#1e293b", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+              <FiPrinter size={18} /> Download / Print Bill
+            </button>
+            <button onClick={() => navigate("/")} style={{ flex: 1, padding: "14px", background: "#ff5722", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+              <FiHome size={18} /> Back to Home
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page-wrapper" style={{ background: "#f5f5f5" }}>

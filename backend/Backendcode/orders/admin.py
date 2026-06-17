@@ -1,17 +1,20 @@
 from django.contrib import admin
-from .models import Order, OrderItem
+from .models import OrderItem
 
-
-class OrderItemInline(admin.TabularInline):
-    model = OrderItem
-    extra = 0
-    readonly_fields = ('item_name', 'menu_item', 'quantity', 'price')
-
-
-@admin.register(Order)
-class OrderAdmin(admin.ModelAdmin):
-    list_display = ('id', 'table', 'restaurant', 'order_type', 'status', 'payment_status', 'item_names', 'total_price', 'created_at')
+@admin.register(OrderItem)
+class OrderItemAdmin(admin.ModelAdmin):
+    # Column sequence: ID, Table, Order Type, Item Names, Total Price, Status, Payment Status, Date
+    list_display = ('id', 'table', 'order_type', 'item_names', 'total_price', 'status', 'payment_status', 'created_at')
+    
+    # Recent orders show on top
+    ordering = ['-created_at']
+    
     list_filter = ('status', 'payment_status', 'order_type', 'table', 'created_at')
-    search_fields = ('id', 'item_names', 'razorpay_order_id', 'razorpay_payment_id')
-    inlines = [OrderItemInline]
-    readonly_fields = ('total_price', 'created_at', 'item_names', 'razorpay_order_id', 'razorpay_payment_id', 'razorpay_signature')
+    search_fields = ('=id', 'item_names')
+    readonly_fields = ('created_at',)
+
+    fieldsets = (
+        ('Order Info', {
+            'fields': ('table', 'order_type', 'item_names', 'total_price', 'status', 'payment_status', 'created_at')
+        }),
+    )
