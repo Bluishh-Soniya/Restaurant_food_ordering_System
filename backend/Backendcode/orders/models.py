@@ -56,7 +56,10 @@ class OrderItem(models.Model):
     # 8. Date (date only, no time)
     created_at = models.DateField(auto_now_add=True)
 
-    # 9. Restaurant reference
+    # 9. Session ID — groups multiple orders into one dining session/receipt
+    session_id = models.CharField(max_length=100, blank=True, null=True, db_index=True)
+
+    # 10. Restaurant reference
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, default=1)
 
     class Meta:

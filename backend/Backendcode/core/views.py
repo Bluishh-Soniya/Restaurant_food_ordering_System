@@ -4,13 +4,15 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.db import IntegrityError
 
-from .models import Footer
+from .models import Footer, NewsletterSubscriber
 from .serializers import FooterSerializer, NewsletterSerializer
 
 
 class FooterAPIView(APIView):
     def get(self, request):
         footer = Footer.objects.last()  # latest entry
+        if not footer:
+            return Response({})
         serializer = FooterSerializer(footer)
         return Response(serializer.data)
 

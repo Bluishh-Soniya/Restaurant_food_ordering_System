@@ -1,16 +1,18 @@
 import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useCart } from "../context/CartContext";
 
 const TableRedirect = () => {
   const { tableNumber } = useParams();
   const navigate = useNavigate();
+  const { changeTable } = useCart();
 
   useEffect(() => {
     if (tableNumber) {
-      localStorage.setItem("tableNumber", tableNumber);
+      changeTable(tableNumber);
     }
     navigate("/", { replace: true });
-  }, [tableNumber, navigate]);
+  }, [tableNumber, navigate, changeTable]);
 
   return null;
 };

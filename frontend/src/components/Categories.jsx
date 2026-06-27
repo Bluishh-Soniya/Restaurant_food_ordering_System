@@ -1,6 +1,5 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { FaUtensils } from "react-icons/fa";
 
 const Categories = ({ data }) => {
 
@@ -16,22 +15,19 @@ const Categories = ({ data }) => {
 
   return (
 
-    <section className="section" style={{ background: "#f8f8f8" }}>
+    <section className="section" style={{ background: "transparent", paddingBottom: "0" }}>
 
       <div className="container">
 
         {/* HEADING */}
         <h2
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
             fontSize: "clamp(22px, 4vw, 36px)",
-            fontWeight: "bold"
+            fontWeight: "bold",
+            marginBottom: "10px"
           }}
         >
-          <FaUtensils color="#1e3a8a" />
-          Categories
+          📁 Categories
         </h2>
 
         <p
@@ -56,13 +52,14 @@ const Categories = ({ data }) => {
         <div
           style={{
             display: "flex",
-            gap: "24px",
-            overflowX: "auto",
+            gap: "clamp(30px, 5vw, 70px)",
+            flexWrap: "nowrap",
             paddingBottom: "12px",
             paddingTop: "4px",
             alignItems: "flex-start",
-            justifyContent: "center",
-            scrollbarWidth: "none",
+            justifyContent: "space-between",
+            width: "100%",
+            overflow: "hidden"
           }}
         >
 
@@ -76,10 +73,11 @@ const Categories = ({ data }) => {
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                minWidth: "160px",
+                flex: 1,
+                minWidth: "0",
+                maxWidth: "160px",
                 cursor: "pointer",
                 transition: "all 0.3s ease",
-                flexShrink: 0,
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.opacity = "0.85";
@@ -94,11 +92,11 @@ const Categories = ({ data }) => {
               {/* CIRCLE IMAGE */}
               <div
                 style={{
-                  width: "160px",
-                  height: "160px",
+                  width: "clamp(60px, 11vw, 160px)",
+                  aspectRatio: "1 / 1",
                   borderRadius: "50%",
                   overflow: "hidden",
-                  border: "5px solid #fff",
+                  border: "4px solid #fff",
                   boxShadow: "0 6px 20px rgba(0,0,0,0.12)",
                   background: "#fff",
                   marginBottom: "14px",

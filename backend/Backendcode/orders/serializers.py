@@ -17,6 +17,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
             'total_price',
             'status',
             'payment_status',
+            'session_id',
             'created_at',
         ]
         read_only_fields = ['status', 'created_at']

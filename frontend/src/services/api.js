@@ -41,5 +41,14 @@ export const verifyPayment = (data) => {
 };
 
 
+// CALCULATE TAX
+export const calculateTax = (data) => {
+  return API.post("calculate-tax/", data);
+};
+
+// FETCH ALL ORDERS IN A SESSION (for cumulative receipt)
+export const fetchSessionOrders = (sessionId) => {
+  return API.get(`session-orders/${sessionId}/`);
+};
 
 export default API;

@@ -42,7 +42,7 @@ const Trending = ({ data }) => {
 
   return (
 
-    <section className="section" style={{ background: "#f8f8f8" }}>
+    <section className="section" style={{ background: "#FDE7D4", paddingTop: "40px", paddingBottom: "40px" }}>
 
       <div className="container">
 
@@ -58,10 +58,11 @@ const Trending = ({ data }) => {
         style={{
           display: "flex",
           gap: "20px",
-          overflowX: "auto",
+          flexWrap: "nowrap",
           paddingBottom: "10px",
           paddingTop: "4px",
-          flexWrap: "nowrap",
+          justifyContent: "flex-start",
+          overflowX: "auto",
           scrollbarWidth: "none",
         }}
       >
@@ -91,10 +92,13 @@ const Trending = ({ data }) => {
               {/* IMAGE */}
               <div
                 style={{
-                  width: "100%",
-                  height: "220px",
-                  background: "#e0e0e0",
-                  overflow: "hidden"
+                  width: "180px",
+                  height: "180px",
+                  margin: "16px auto 0 auto",
+                  borderRadius: "50%",
+                  background: "#FDE7D4",
+                  overflow: "hidden",
+                  boxShadow: "0 6px 15px rgba(0,0,0,0.1)",
                 }}
               >
 

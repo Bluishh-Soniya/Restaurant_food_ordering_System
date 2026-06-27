@@ -1,0 +1,248 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+      xmlns:w="urn:schemas-microsoft-com:office:word"
+      xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<title>RestroScan Project Report</title>
+<style>
+    @page WordSection1 {
+        size: 8.27in 11.69in;
+        margin: 1.0in 1.0in 1.0in 1.0in;
+        mso-header-margin: .5in;
+        mso-footer-margin: .5in;
+        mso-paper-source: 0;
+        border: 3.0pt solid windowtext;
+        padding: 24.0pt 24.0pt 24.0pt 24.0pt;
+    }
+    div.WordSection1 { page: WordSection1; }
+    body { font-family: "Times New Roman", Times, serif; font-size: 12pt; text-align: justify; line-height: 1.5; }
+    h1 { font-size: 16pt; font-weight: bold; text-align: center; margin-top: 20px; }
+    h2 { font-size: 14pt; font-weight: bold; margin-top: 15px; }
+    h3 { font-size: 12pt; font-weight: bold; margin-top: 10px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    th, td { border: 1px solid black; padding: 6px; }
+    th { font-weight: bold; background-color: #f2f2f2; }
+    .center { text-align: center; }
+    .pb { page-break-before: always; }
+</style>
+</head>
+<body>
+<div class="WordSection1">
+
+<!-- Title Page -->
+<div class="center">
+    <br><br><br>
+    <h1 style="font-size: 22pt;">RestroScan - Restaurant Food Ordering System</h1>
+    <br><br>
+    <p><b>A Project Submitted to</b></p>
+    <br><br>
+    <h2 style="font-size: 18pt;">YOUR COLLEGE / INSTITUTE NAME</h2>
+    <p><b>Affiliated to Your University Name</b></p>
+    <br><br>
+    <p>in the partial fulfillment of the requirements for the award of</p>
+    <br>
+    <p><b style="font-size: 18pt;">MASTER OF COMPUTER APPLICATIONS</b><br><b style="font-size: 14pt;">(MCA)</b></p>
+    <br><br><br>
+    <p><i>By</i></p>
+    <p><b>Your Name</b><br>Roll No.: XXXXXX<br>Enrollment No.: XXXXXX</p>
+    <br><br>
+    <p><b>Under the Guidance of</b><br>Your Guide Name</p>
+    <br><br><br>
+    <p><b>DEPARTMENT OF COMPUTER APPLICATIONS</b><br>Session: 2023–2025</p>
+</div>
+
+<div class="pb"></div>
+<!-- Certificates and Declarations (Placeholders like PDF) -->
+<h1 class="center">CERTIFICATE OF GUIDE</h1>
+<p>This is to certify that the work incorporated in the project <b>RestroScan - Restaurant Food Ordering System</b> is a record of project work, successfully carried out by <b>[Your Name]</b> bearing Roll No. <b>[XXXXXX]</b>, Enrollment No. <b>[XXXXXX]</b>, under my guidance and supervision. This work has been completed for the award of the Degree of <b>Master of Computer Applications</b>. To the best of my knowledge and belief, the report embodies the work of the candidate and has been duly and successfully completed.</p>
+<br><br><br>
+<p style="text-align: right;">Signature of Guide<br>Date:</p>
+
+<div class="pb"></div>
+<h1 class="center">DECLARATION BY THE CANDIDATE</h1>
+<p>I, <b>[Your Name]</b>, student of MCA, hereby declare that the project entitled <b>RestroScan - Restaurant Food Ordering System</b> has been carried out by me under the guidance of <b>[Guide Name]</b>, and is submitted in partial fulfillment of the requirements for the award of the Degree of <b>Master of Computer Applications</b>. This report has not been submitted to any other organization/university for any award of degree/diploma.</p>
+<br><br><br>
+<p style="text-align: right;">Signature of Candidate<br>Date:</p>
+
+<div class="pb"></div>
+<h1 class="center">ACKNOWLEDGEMENT</h1>
+<p>I have great pleasure in submitting the project report entitled <b>"RestroScan - Restaurant Food Ordering System"</b> in partial fulfillment of the Degree of Master of Computer Applications. I take this opportunity to thank all those who have been directly or indirectly associated with the project work.</p>
+<p>I would like to thank my guide for providing me the opportunity and for organizing the project. Without their active cooperation and guidance, it would have been very difficult to complete the task on time.</p>
+<br><br><br>
+<p style="text-align: right;"><b>[Your Name]</b></p>
+
+<div class="pb"></div>
+<h1 class="center">Table of Contents</h1>
+<table>
+    <tr><th>SNo.</th><th>Heading</th><th>Page No.</th></tr>
+    <tr><td>1</td><td>Abstract and Type of Project (Software)</td><td>1</td></tr>
+    <tr><td>2</td><td>Project Development Process Model Used</td><td>2</td></tr>
+    <tr><td>3</td><td>Project's Process Documentation (INCEPTION PHASE)</td><td>3</td></tr>
+    <tr><td>4</td><td>ELABORATION PHASE (DETAIL DESIGN)</td><td>4</td></tr>
+    <tr><td>5</td><td>CONSTRUCTION PHASE</td><td>5</td></tr>
+    <tr><td>6</td><td>TRANSITION PHASE</td><td>6</td></tr>
+    <tr><td>7</td><td>Limitations & Future Enhancements</td><td>7</td></tr>
+    <tr><td>8</td><td>Conclusion</td><td>8</td></tr>
+</table>
+
+<div class="pb"></div>
+<h2>1. Abstract and Type of Project (Software)</h2>
+<p>The <b>RestroScan - Restaurant Food Ordering System</b> is developed using modern software engineering practices and follows an iterative and organic software development model. The development is divided into four phases: <b>Inception, Elaboration, Construction, and Transition</b>. In the Inception Phase, the project scope, objectives, and detailed requirements were identified and documented in the Software Requirements Specification (SRS), focusing on overall menu management, order processing, table QR scanning, and administrative functionalities. This phase established a strong foundation for design, development, and testing.</p>
+<p>Within RestroScan, the modules specifically manage restaurant menus, table allocations, and dynamic offers. During the Elaboration Phase, the module was designed using structured models, including the Object Model, Dynamic Model, and Functional Model, ensuring structured workflows and module interactions. In the Construction Phase, the system was implemented using <b>React.js</b> for the frontend, <b>Django (Python)</b> for the backend, and <b>SQLite/Relational DB</b> for database management, followed by rigorous testing.</p>
+<p>The project is classified as an organic type software project under the COCOMO model. The system provides a centralized, user-friendly platform for managing restaurant orders via QR codes, reducing manual effort while improving operational efficiency, accuracy, and customer experience.</p>
+
+<div class="pb"></div>
+<h2>4. Project Development Process Model Used (Methodology)</h2>
+<p>In the RestroScan project, a modern software development methodology has been adopted, which is divided into two main stages: <b>Engineering Stage</b> and <b>Production Stage</b>. The Engineering Stage comprises the Inception Phase and the Elaboration Phase, whereas the Production Stage includes the Construction Phase and the Transition Phase.</p>
+<p>Each phase follows an iterative approach. The <b>Inception Phase</b> focuses on understanding the problem domain and defining the solution space (SRS). The <b>Elaboration Phase</b> results in a detailed architectural design, using UML diagrams and object models.</p>
+<p>In the <b>Construction Phase</b>, actual coding and testing of the system are performed (using React and Django). Finally, the <b>Transition Phase</b> delivers the final product after incorporating user feedback and performing final validations.</p>
+
+<div class="pb"></div>
+<h2>5. PROJECT'S PROCESS DOCUMENTATION</h2>
+<h2>5.1 INCEPTION PHASE</h2>
+<h3>5.1.1 Initial Description of Problem</h3>
+<p><b>Problem Statement:</b> In many restaurants, food ordering is still managed manually or through uncoordinated legacy systems, leading to order processing delays, incorrect billing, and lack of visibility into table occupancies. Additionally, the absence of integrated platforms for core restaurant functions—such as digital menus, QR-based ordering, and dynamic offer tracking—creates operational inefficiencies.</p>
+<p>RestroScan addresses these issues by offering a streamlined, web-based platform that ensures accurate order management, QR code table integration, and real-time processing. Through its modular design, the system enhances administrative efficiency and enables timely decision-making.</p>
+
+<h3>5.1.2 Software Requirement Specification - SRS</h3>
+<h4>5.1.2.1 Non-Functional Requirements</h4>
+<ul>
+    <li><b>Hardware Requirements:</b> RAM: Minimum 2GB. Storage: Minimum 1 GB of free space.</li>
+    <li><b>Software Requirements:</b> Web Browser (Chrome, Firefox). Backend: Django (Python). Frontend: React.js.</li>
+    <li><b>Communication Interfaces:</b> RESTful APIs via HTTP/HTTPS.</li>
+</ul>
+
+<h4>5.1.2.2 Functional Requirements</h4>
+<ul>
+    <li><b>User/Admin Authentication:</b> Role-based access for restaurant admins and customers. Secure password hashing.</li>
+    <li><b>Menu Management:</b> Admins can add, view, update, or delete menu items and categories.</li>
+    <li><b>Table Management:</b> System auto-generates QR codes for tables. Customers can scan to view the menu and order.</li>
+    <li><b>Order Management:</b> Customers can place dine-in or parcel orders. Admins can update order status (Pending, Preparing, Ready, Delivered).</li>
+    <li><b>Offers & Banners:</b> Admins can manage promotional banners and discount offers for menu items.</li>
+</ul>
+
+<h4>5.1.2.3 Performance & Security Requirements</h4>
+<p><b>Performance:</b> The system supports concurrent users with response times < 1 second. Real-time updates reflect swiftly.</p>
+<p><b>Security Features:</b> Django CSRF protection, SQL Injection protection via Django ORM, Cross-Site Scripting (XSS) protection in React, and secure API endpoints.</p>
+
+<div class="pb"></div>
+<h2>5.2 ELABORATION PHASE (DETAIL DESIGN)</h2>
+<h3>5.2.1 Object Model</h3>
+<h4>5.2.1.1 Object Classes</h4>
+<table>
+    <tr><th>SNo.</th><th>Name of Object/Class</th><th>Description</th></tr>
+    <tr><td>1</td><td>RestaurantManager</td><td>Handles restaurant details and core config.</td></tr>
+    <tr><td>2</td><td>MenuManager</td><td>Manages categories, items, and pricing.</td></tr>
+    <tr><td>3</td><td>OrderProcessor</td><td>Handles cart, order placement, and status updates.</td></tr>
+    <tr><td>4</td><td>TableManager</td><td>Manages table creation, allocation, and QR generation.</td></tr>
+    <tr><td>5</td><td>OfferManager</td><td>Manages discounts, validity periods, and banners.</td></tr>
+</table>
+
+<h4>5.2.1.2 Data Dictionary</h4>
+<table>
+    <tr><th>Class</th><th>Data Member</th><th>Type</th><th>Description</th></tr>
+    <tr><td rowspan="3">MenuItem</td><td>name</td><td>varchar</td><td>Name of the food item</td></tr>
+    <tr><td>price</td><td>decimal</td><td>Base price</td></tr>
+    <tr><td>is_available</td><td>boolean</td><td>Current stock status</td></tr>
+    <tr><td rowspan="3">Order</td><td>total_price</td><td>decimal</td><td>Total order cost</td></tr>
+    <tr><td>status</td><td>varchar</td><td>Pending, Preparing, Ready</td></tr>
+    <tr><td>payment_status</td><td>varchar</td><td>Pending, Success, Failed</td></tr>
+    <tr><td rowspan="2">Table</td><td>table_number</td><td>integer</td><td>Unique table identifier</td></tr>
+    <tr><td>qr_code</td><td>image</td><td>Auto-generated QR code</td></tr>
+</table>
+
+<h4>5.2.1.6 Object / ER Diagram Representation</h4>
+<p><i>The relationships are defined as follows:</i></p>
+<ul>
+    <li>A <b>Restaurant</b> has many <b>Categories</b> and <b>MenuItems</b> (1:N).</li>
+    <li>A <b>MenuItem</b> belongs to a <b>Category</b> (N:1) and can have many <b>Offers</b> (1:N).</li>
+    <li>An <b>Order</b> consists of multiple <b>OrderItems</b> (1:N).</li>
+    <li>An <b>OrderItem</b> maps a <b>MenuItem</b> to a <b>Table</b>.</li>
+</ul>
+
+<div class="center">
+    <div style="border:1px solid black; padding:10px; display:inline-block; margin: 10px;">Restaurant</div>
+    <b>---(1:N)---></b>
+    <div style="border:1px solid black; padding:10px; display:inline-block; margin: 10px;">MenuItem</div>
+    <br>
+    <div style="border:1px solid black; padding:10px; display:inline-block; margin: 10px;">Table</div>
+    <b>---(1:N)---></b>
+    <div style="border:1px solid black; padding:10px; display:inline-block; margin: 10px;">Order</div>
+</div>
+
+<div class="pb"></div>
+<h3>5.2.4 Database Design (Schema Definitions)</h3>
+<table>
+    <tr><th>Table Name</th><th>Column Name</th><th>Type</th><th>Key</th></tr>
+    <tr><td rowspan="2">menu_category</td><td>id</td><td>INT</td><td>Primary Key</td></tr>
+    <tr><td>name</td><td>VARCHAR(100)</td><td></td></tr>
+    
+    <tr><td rowspan="4">menu_menuitem</td><td>id</td><td>INT</td><td>Primary Key</td></tr>
+    <tr><td>category_id</td><td>INT</td><td>Foreign Key</td></tr>
+    <tr><td>name</td><td>VARCHAR(200)</td><td></td></tr>
+    <tr><td>price</td><td>DECIMAL(10,2)</td><td></td></tr>
+    
+    <tr><td rowspan="3">menu_table</td><td>id</td><td>INT</td><td>Primary Key</td></tr>
+    <tr><td>table_number</td><td>INT</td><td>Unique</td></tr>
+    <tr><td>qr_code</td><td>VARCHAR(255)</td><td></td></tr>
+
+    <tr><td rowspan="4">orders_orderitem</td><td>id</td><td>INT</td><td>Primary Key</td></tr>
+    <tr><td>table_id</td><td>INT</td><td>Foreign Key</td></tr>
+    <tr><td>status</td><td>VARCHAR(20)</td><td></td></tr>
+    <tr><td>total_price</td><td>DECIMAL(10,2)</td><td></td></tr>
+</table>
+
+<div class="pb"></div>
+<h2>5.3 CONSTRUCTION PHASE</h2>
+<h3>5.3.1 CASE Tools used to design</h3>
+<p>Visual Studio Code (VS Code) was used as the primary IDE for coding both the frontend and backend.</p>
+
+<h3>5.3.2 Coding Language and Operating System (OS) used</h3>
+<p><b>OS:</b> Windows OS. <br><b>Backend:</b> Python using the Django Web Framework. <br><b>Frontend:</b> JavaScript using the React.js library. <br><b>Database:</b> SQLite (Django default) / Relational DB.</p>
+
+<h3>5.3.3 Database connectivity procedure</h3>
+<p>The backend utilizes Django's built-in Object-Relational Mapper (ORM). Database connectivity is configured in <code>settings.py</code> using the <code>DATABASES</code> dictionary, securely handling migrations and connections.</p>
+
+<h3>5.3.4 Code description</h3>
+<table>
+    <tr><th>S.no</th><th>File name</th><th>Purpose</th></tr>
+    <tr><td>1</td><td>models.py</td><td>Defines database schema (MenuItem, Order, Table)</td></tr>
+    <tr><td>2</td><td>views.py / APIs</td><td>Handles RESTful logic for orders and menu fetching</td></tr>
+    <tr><td>3</td><td>App.js</td><td>React root component and routing</td></tr>
+    <tr><td>4</td><td>CartPage.jsx</td><td>Handles shopping cart UI and checkout logic</td></tr>
+    <tr><td>5</td><td>CheckoutPage.jsx</td><td>Manages order submission and payments</td></tr>
+</table>
+
+<div class="pb"></div>
+<h2>5.4 TRANSITION PHASE</h2>
+<h3>5.4.1 Report of Alpha testing</h3>
+<ul>
+    <li><b>Black-box Unit Testing:</b> Each API endpoint (e.g., adding an item, placing an order) was tested for expected JSON outputs.</li>
+    <li><b>White-box Unit Testing:</b> Internal logic like discount calculation (<code>final_price</code> property) and QR generation were tested.</li>
+    <li><b>Integrated System Testing:</b> End-to-end flow from scanning the QR code, viewing the menu, adding to cart, and confirming the order was validated.</li>
+</ul>
+
+<h3>5.4.2 DSLOC and Cost estimation</h3>
+<p>Based on Intermediate COCOMO, the organic project required estimated efforts calculated using standard function points for user inputs (Menu, Orders), outputs (Receipts), and interfaces. Total estimated source lines of code (DSLOC) roughly amounts to 5-8 KLOC.</p>
+
+<div class="pb"></div>
+<h2>6. Limitations & Future Enhancements</h2>
+<h3>6.1 Limitations</h3>
+<ul>
+    <li><b>Static Payment Gateway:</b> Advanced third-party split payments are not fully dynamic.</li>
+    <li><b>Scalability:</b> Caching mechanisms (like Redis) are needed for handling massive concurrent table connections.</li>
+</ul>
+
+<h3>6.2 Future Enhancements</h3>
+<ul>
+    <li><b>AI Recommendations:</b> Suggesting food items based on previous orders and trending items.</li>
+    <li><b>Real-time WebSockets:</b> Live order tracking from "Preparing" to "Delivered" without page refresh.</li>
+    <li><b>Advanced Analytics:</b> Admin dashboards showing daily sales graphs and peak hours.</li>
+</ul>
+
+<h2>7. Conclusion</h2>
+<p>The RestroScan system successfully replaces manual food ordering with a centralized, digital solution. Developed through iterative phases (Inception, Elaboration, Construction, Transition), it utilizes a robust tech stack of React.js and Django. The system achieves its objectives of efficient menu management, seamless QR-based table ordering, and accurate billing, providing a strong foundation for future restaurant operational enhancements.</p>
+
+</div>
+</body>
+</html>

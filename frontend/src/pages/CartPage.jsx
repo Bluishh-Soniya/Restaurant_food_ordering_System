@@ -1,8 +1,9 @@
-import React, { useContext } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { useCart } from "../context/CartContext";
 import { useNavigate } from "react-router-dom";
 import { NotificationContext } from "../context/NotificationContext";
 import { MdOutlineShoppingCart } from "react-icons/md";
+import { calculateTax } from "../services/api";
 
 const CartPage = () => {
 
@@ -11,7 +12,8 @@ const CartPage = () => {
     increaseQty,
     decreaseQty,
     removeFromCart,
-    totalPrice
+    totalPrice,
+    activeSessionId
   } = useCart();
 
   const { addNotification } = useContext(NotificationContext);
@@ -25,9 +27,27 @@ const CartPage = () => {
     removeFromCart(itemId);
   };
 
-  const tax = totalPrice * 0.05;
+  // ✅ STATE FOR TAX DETAILS FROM BACKEND
+  const [taxDetails, setTaxDetails] = useState({ cgst: 0, sgst: 0, total: totalPrice });
 
-  const finalTotal = totalPrice + tax;
+  // ✅ FETCH TAX FROM BACKEND WHENEVER TOTALPRICE CHANGES
+  useEffect(() => {
+    if (totalPrice > 0) {
+      calculateTax({ subtotal: totalPrice })
+        .then((res) => {
+          setTaxDetails(res.data);
+        })
+        .catch((err) => {
+          console.error("Error calculating tax:", err);
+          // Fallback if API fails
+          const cgst = totalPrice * 0.025;
+          const sgst = totalPrice * 0.025;
+          setTaxDetails({ cgst, sgst, total: totalPrice + cgst + sgst });
+        });
+    } else {
+      setTaxDetails({ cgst: 0, sgst: 0, total: 0 });
+    }
+  }, [totalPrice]);
 
   return (
 
@@ -69,6 +89,27 @@ const CartPage = () => {
             }}
           >
             🍽️ Table {localStorage.getItem("tableNumber")}
+          </div>
+        )}
+
+        {/* ✅ EXISTING SESSION BANNER */}
+        {activeSessionId && (
+          <div
+            style={{
+              background: "#e8f5e9",
+              border: "1px solid #66bb6a",
+              borderRadius: "10px",
+              padding: "12px 18px",
+              marginBottom: "20px",
+              fontSize: "14px",
+              color: "#2e7d32",
+              fontWeight: "600",
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+            }}
+          >
+            <span style={{ fontSize: "18px" }}>🔄</span> Adding to your existing order — new items will appear on the same bill
           </div>
         )}
 
@@ -285,8 +326,19 @@ const CartPage = () => {
                     fontSize: "15px",
                   }}
                 >
-                  <span>Tax (5%)</span>
-                  <span>₹{tax.toFixed(2)}</span>
+                  <span>CGST (2.5%)</span>
+                  <span>₹{taxDetails.cgst.toFixed(2)}</span>
+                </p>
+
+                <p
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: "15px",
+                  }}
+                >
+                  <span>SGST (2.5%)</span>
+                  <span>₹{taxDetails.sgst.toFixed(2)}</span>
                 </p>
 
                 <hr style={{ margin: "4px 0", border: "none", borderTop: "1px solid #eee" }} />
@@ -300,7 +352,7 @@ const CartPage = () => {
                   }}
                 >
                   <span>Total</span>
-                  <span>₹{finalTotal.toFixed(2)}</span>
+                  <span>₹{taxDetails.total.toFixed(2)}</span>
                 </p>
 
               </div>

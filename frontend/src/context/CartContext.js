@@ -6,6 +6,39 @@ export const CartProvider = ({ children }) => {
 
   const [cart, setCart] = useState([]);
 
+  // ✅ SESSION MANAGEMENT — groups multiple orders into one dining session
+  const [activeSessionId, setActiveSessionIdState] = useState(() => {
+    const tableNo = localStorage.getItem("tableNumber");
+    return tableNo ? (localStorage.getItem(`session_${tableNo}`) || null) : null;
+  });
+
+  // Function to switch tables reliably
+  const changeTable = (newTable) => {
+    localStorage.setItem("tableNumber", newTable);
+    setCart([]); // Clear unsaved cart items
+    setActiveSessionIdState(localStorage.getItem(`session_${newTable}`) || null);
+  };
+
+  const setActiveSessionId = (sessionId) => {
+    const tableNo = localStorage.getItem("tableNumber");
+    setActiveSessionIdState(sessionId);
+    if (sessionId && tableNo) {
+      localStorage.setItem(`session_${tableNo}`, sessionId);
+    } else if (tableNo) {
+      localStorage.removeItem(`session_${tableNo}`);
+    }
+  };
+
+  // ✅ END SESSION — clears session and cart for CURRENT table
+  const endSession = () => {
+    const tableNo = localStorage.getItem("tableNumber");
+    setActiveSessionIdState(null);
+    if (tableNo) {
+      localStorage.removeItem(`session_${tableNo}`);
+    }
+    setCart([]);
+  };
+
   // ✅ ADD ITEM
   const addToCart = (item) => {
     // ✅ MUST HAVE A TABLE NUMBER FIRST
@@ -147,7 +180,15 @@ export const CartProvider = ({ children }) => {
 
         totalPrice,
 
-        clearCart
+        clearCart,
+
+        activeSessionId,
+
+        setActiveSessionId,
+
+        endSession,
+
+        changeTable
       }}
     >
 

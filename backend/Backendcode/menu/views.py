@@ -1,3 +1,4 @@
+import uuid
 from django.conf import settings
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -188,29 +189,100 @@ class CreatePaymentView(APIView):
             }, status=200)
 
         except Exception as e:
-            return Response({"error": str(e)}, status=400)
+            import traceback
+            tb = traceback.format_exc()
+            print("CREATE PAYMENT ERROR:\n", tb)
+            return Response({"error": f"{str(e)}\n{tb}"}, status=400)
 
-# ✅ ORDER CREATE VIEW (FINAL CLEAN)
+# ✅ ORDER CREATE VIEW (WITH SESSION SUPPORT)
 class OrderCreateView(APIView):
     def post(self, request):
+        print("=" * 50)
         print("ORDER VIEW HIT")
-        serializer = OrderItemSerializer(data=request.data)
-    
-        if serializer.is_valid():
-            order_item = serializer.save()
+        print("Request data:", request.data)
 
-            # Mark payment as success if Razorpay verification data was sent
-            razorpay_payment_id = request.data.get('razorpay_payment_id')
-            if razorpay_payment_id:
-                order_item.payment_status = 'success'
-                order_item.save()
+        try:
+            data = request.data.copy()
 
-            return Response({
-                "message": "Order placed successfully",
-                "order": OrderItemSerializer(order_item).data
-            }, status=201)
+            # Auto-generate session_id if not provided (first order in session)
+            if not data.get('session_id'):
+                data['session_id'] = str(uuid.uuid4())
 
-        return Response(serializer.errors, status=400)
+            print("Data after session_id:", data)
+
+            serializer = OrderItemSerializer(data=data)
+        
+            if serializer.is_valid():
+                print("Serializer VALID, saving...")
+                order_item = serializer.save()
+                print("Order saved! ID:", order_item.id)
+
+                # Mark payment as success if Razorpay verification data was sent
+                razorpay_payment_id = request.data.get('razorpay_payment_id')
+                if razorpay_payment_id:
+                    order_item.payment_status = 'success'
+                    order_item.save()
+                    print("Payment status set to success")
+
+                return Response({
+                    "message": "Order placed successfully",
+                    "order": OrderItemSerializer(order_item).data
+                }, status=201)
+
+            print("Serializer ERRORS:", serializer.errors)
+            return Response(serializer.errors, status=400)
+
+        except Exception as e:
+            print("ORDER CREATE EXCEPTION:", str(e))
+            import traceback
+            traceback.print_exc()
+            return Response({"error": str(e)}, status=500)
+
+
+# ✅ SESSION ORDERS VIEW — fetch all orders in a dining session
+class SessionOrdersView(APIView):
+    def get(self, request, session_id):
+        from orders.models import OrderItem as OrderItemModel
+
+        orders = OrderItemModel.objects.filter(
+            session_id=session_id
+        ).order_by('id')
+
+        if not orders.exists():
+            return Response(
+                {"error": "No orders found for this session"},
+                status=404
+            )
+
+        # Build per-round data
+        rounds = []
+        cumulative_subtotal = Decimal('0')
+
+        for idx, order in enumerate(orders, start=1):
+            rounds.append({
+                "round": idx,
+                "order_id": order.id,
+                "item_names": order.item_names,
+                "subtotal": float(order.total_price),
+                "status": order.status,
+                "payment_status": order.payment_status,
+            })
+            cumulative_subtotal += order.total_price
+
+        # Calculate cumulative tax
+        cgst = round(float(cumulative_subtotal) * 0.025, 2)
+        sgst = round(float(cumulative_subtotal) * 0.025, 2)
+        grand_total = round(float(cumulative_subtotal) + cgst + sgst, 2)
+
+        return Response({
+            "session_id": session_id,
+            "table_number": orders.first().table.table_number if orders.first().table else None,
+            "rounds": rounds,
+            "cumulative_subtotal": float(cumulative_subtotal),
+            "cgst": cgst,
+            "sgst": sgst,
+            "grand_total": grand_total,
+        })
 
 
 # ✅ VERIFY RAZORPAY PAYMENT VIEW
@@ -254,4 +326,22 @@ class TableListView(APIView):
             }
             for t in tables
         ]
-        return Response(data)
+        return Response(data)
+
+# ✅ CALCULATE TAX VIEW
+class CalculateTaxView(APIView):
+    def post(self, request):
+        try:
+            subtotal = float(request.data.get('subtotal', 0))
+            cgst = round(subtotal * 0.025, 2)
+            sgst = round(subtotal * 0.025, 2)
+            total = round(subtotal + cgst + sgst, 2)
+            
+            return Response({
+                "subtotal": subtotal,
+                "cgst": cgst,
+                "sgst": sgst,
+                "total": total
+            }, status=200)
+        except ValueError:
+            return Response({"error": "Invalid subtotal provided"}, status=400)

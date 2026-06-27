@@ -7,10 +7,12 @@ const Offers = ({ data }) => {
     <section
       className="section"
       style={{
-        width: "100%",
+        margin: "0 calc(-50vw + 50%)",
+        width: "100vw",
         paddingLeft: "0",
         paddingRight: "0",
         overflow: "hidden",
+        position: "relative"
       }}
     >
       {/* HEADING inside container for consistent alignment */}
@@ -29,6 +31,7 @@ const Offers = ({ data }) => {
           display: "flex",
           flexDirection: "column",
           gap: "0px",
+          width: "100%",
         }}
       >
         {data.map((o) => (

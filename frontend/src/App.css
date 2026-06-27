@@ -2,37 +2,93 @@
   text-align: center;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+/* Global Layout Utilities */
+.main-content {
+  min-height: calc(100vh - 150px);
+  padding: 20px 0;
+  max-width: 1240px;
+  margin: 0 auto;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
+/* Premium Input Styles globally */
+input, textarea, select {
+  font-family: 'Inter', sans-serif;
+  transition: all 0.3s ease;
+  border-radius: var(--radius-sm);
+  border: 1px solid #e0e0e0;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 3px rgba(255, 87, 34, 0.15) !important;
+}
+
+/* Premium Card Styles */
+.food-card {
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.food-card:hover {
+  transform: translateY(-8px) !important;
+  box-shadow: var(--shadow-lg) !important;
+  border-color: transparent !important;
+}
+
+.food-card img {
+  transition: transform 0.5s ease;
+}
+
+.food-card:hover img {
+  transform: scale(1.08);
+}
+
+/* Badge Style */
+.badge {
+  background: rgba(255, 87, 34, 0.1);
+  color: var(--primary-color);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+/* Print Styles for Checkout Invoice - Thermal Printer 80mm */
+@media print {
+  @page { 
+    margin: 0; 
+    size: 80mm auto; 
   }
-}
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
-
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+  body * { visibility: hidden; }
+  
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 80mm;
+    background: #fff;
   }
-  to {
-    transform: rotate(360deg);
+
+  #receipt-area, #receipt-area * { 
+    visibility: visible; 
+  }
+
+  #receipt-area { 
+      position: absolute; 
+      left: 0; 
+      top: 0; 
+      width: 100%;
+      max-width: 80mm;
+      margin: 0; 
+      padding: 5px; 
+      box-shadow: none !important;
+      border: none !important;
+      border-radius: 0 !important;
+      background: white !important;
+  }
+
+  .no-print, header, footer, nav { 
+    display: none !important; 
   }
 }
